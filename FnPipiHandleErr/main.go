@@ -11,15 +11,22 @@ func main() {
 }
 
 func test2() {
-	endFn := GetEndFn()
-	err := GetFnPipeWithEnd(endFn)(
+	endFn := EndFn()
+	fn := FnPipeWithEnd(endFn)
+	fn = FnPipeWithResult(func() {
+		fmt.Println("ok")
+	}, func(err error) {
+		fmt.Println("error:", err)
+	}, fn)
+
+	err := fn(
 		func() error {
 			fmt.Println(1)
 			return nil
 		},
 		func() error {
 			fmt.Println(2)
-			endFn(true)
+			//endFn(true)
 			return nil
 		},
 		func() error {
@@ -27,7 +34,7 @@ func test2() {
 			return errors.New("error3")
 		},
 	)
-	fmt.Println("error:", err)
+	fmt.Println("end error:", err)
 }
 
 func test1() {
@@ -54,6 +61,8 @@ func FnWithErr(f func()) func() error {
 	}
 }
 
+type FnPipeType = func(f ...func() error) error
+
 func FnPipe(f ...func() error) error {
 	for i := range f {
 		if err := f[i](); err != nil {
@@ -63,7 +72,7 @@ func FnPipe(f ...func() error) error {
 	return nil
 }
 
-func GetEndFn() func(end ...bool) bool {
+func EndFn() func(end ...bool) bool {
 	flag := false
 	return func(end ...bool) bool {
 		if len(end) == 1 && end[0] == true {
@@ -73,8 +82,8 @@ func GetEndFn() func(end ...bool) bool {
 	}
 }
 
-// GetFnPipeWithEnd 正常结束不返回错误
-func GetFnPipeWithEnd(endFn func(end ...bool) bool) func(f ...func() error) error {
+// FnPipeWithEnd 正常结束不返回错误
+func FnPipeWithEnd(endFn func(end ...bool) bool) FnPipeType {
 	return func(f ...func() error) error {
 		for i := range f {
 			if err := f[i](); err != nil {
@@ -85,5 +94,37 @@ func GetFnPipeWithEnd(endFn func(end ...bool) bool) func(f ...func() error) erro
 			}
 		}
 		return nil
+	}
+}
+
+func FnPipeWithSuccess(success func(), pipe FnPipeType) FnPipeType {
+	return func(f ...func() error) error {
+		err := pipe(f...)
+		if err == nil {
+			success()
+		}
+		return err
+	}
+}
+
+func FnPipeWithFailed(failed func(err error), pipe FnPipeType) FnPipeType {
+	return func(f ...func() error) error {
+		err := pipe(f...)
+		if err != nil {
+			failed(err)
+		}
+		return err
+	}
+}
+
+func FnPipeWithResult(success func(), failed func(err error), pipe FnPipeType) FnPipeType {
+	return func(f ...func() error) error {
+		err := pipe(f...)
+		if err != nil {
+			failed(err)
+		} else {
+			success()
+		}
+		return err
 	}
 }

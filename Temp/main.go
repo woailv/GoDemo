@@ -10,9 +10,9 @@ func main() {
 		1623806954,
 	}
 	for _, i := range s {
-		tm := time.Unix(i,0)
+		tm := time.Unix(i, 0)
 		fmt.Println(tm)
 	}
 
-	fmt.Println(len("1000000827289902"))
+	fmt.Println(len("com.security.xvpn.z35kb.unblock.fullplan.monthly_def"))
 }
