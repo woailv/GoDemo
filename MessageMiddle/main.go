@@ -1,62 +1,11 @@
 package main
 
 import (
-	"GoDemo/Echo"
 	"GoDemo/Err"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 )
-
-type Theme struct {
-	Id        string
-	Name      string
-	Method    string
-	Url       string // domain/id
-	TableName string // default == Id
-}
-
-type Message struct {
-	Id      string
-	Time    int64
-	Content string // 方便搜索
-}
-
-type Sub struct {
-	Id            string
-	ThemeId       string
-	Name          string
-	Url           string
-	MaxRetryTimes int
-}
-
-const (
-	MessageSubStatus1 = 1 // 待发送
-	MessageSubStatus2 = 2 // 队列中
-	MessageSubStatus3 = 3 // 成功
-	MessageSubStatus4 = 4 // 失败
-)
-
-type MessageSubStatus struct {
-	Id         string
-	MessageId  string
-	SubId      string
-	Status     int8
-	RetryTimes int
-}
-
-var id2ThemeMap = map[string]*Theme{
-	"1": {Id: "1", Name: "a", Method: "GET", Url: "/1", TableName: "1"},
-}
-
-var themeId2SubIdList = map[string][]string{
-	"1": {"a", "b"},
-}
-
-var mssChan = make(chan *MessageSubStatus, 100)
-
-var mssList = []*MessageSubStatus{}
 
 func main() {
 	port := ":8080"
@@ -80,39 +29,4 @@ func main() {
 	go SendMessage()
 	err := http.ListenAndServe(port, nil)
 	Err.IfPanic(err)
-}
-
-var mssId = 0
-
-func ReceiverMessage(themeId string, content string) {
-	subIdList := themeId2SubIdList[themeId]
-	message := Message{
-		Id:      "message1",
-		Time:    time.Now().Unix(),
-		Content: content,
-	}
-	for _, subId := range subIdList {
-		mss := &MessageSubStatus{
-			Id:         fmt.Sprintf("mssId.%d", mssId),
-			MessageId:  message.Id,
-			SubId:      subId,
-			Status:     MessageSubStatus2,
-			RetryTimes: 0,
-		}
-		mssList = append(mssList, mss)
-		Echo.Json("receive:", mssList)
-		mssChan <- mss
-		mssId++
-	}
-}
-
-func SendMessage() {
-	for mss := range mssChan {
-		for i := range mssList {
-			if mssList[i].Id == mss.Id {
-				mssList[i].Status = MessageSubStatus3
-			}
-		}
-		Echo.Json("send:", mssList)
-	}
 }
