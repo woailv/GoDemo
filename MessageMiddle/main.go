@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Theme struct {
@@ -44,9 +45,15 @@ type MessageSubStatus struct {
 	RetryTimes int
 }
 
-var idToThemeMap = map[string]*Theme{
+var id2ThemeMap = map[string]*Theme{
 	"1": {Id: "1", Name: "a", Method: "GET", Url: "/1", TableName: "1"},
 }
+
+var themeId2SubIdList = map[string][]string{
+	"1": {"11", "12", "13"},
+}
+
+var mssChan = make(chan *MessageSubStatus, 100)
 
 func main() {
 	port := ":8080"
@@ -58,14 +65,29 @@ func main() {
 		}
 		themeId := path[1:]
 		fmt.Println("theme:", themeId)
-		theme := idToThemeMap[themeId]
+		theme := id2ThemeMap[themeId]
 		if theme == nil {
 			return
 		}
 		if theme.Method != request.Method {
 			return
 		}
-
+		subIdList := themeId2SubIdList[themeId]
+		message := Message{
+			Id:   "message1",
+			Time: time.Now().Unix(),
+			Body: "this is a message",
+		}
+		for _, subId := range subIdList {
+			mss := &MessageSubStatus{
+				Id:         "mssId1",
+				MessageId:  message.Id,
+				SubId:      subId,
+				Status:     MessageSubStatus2,
+				RetryTimes: 0,
+			}
+			mssChan <- mss
+		}
 	})
 	err := http.ListenAndServe(port, nil)
 	Err.IfPanic(err)
