@@ -1,6 +1,7 @@
 package main
 
 import (
+	"GoDemo/Echo"
 	"GoDemo/Err"
 	"fmt"
 	"net/http"
@@ -17,9 +18,9 @@ type Theme struct {
 }
 
 type Message struct {
-	Id   string
-	Time int64
-	Body string // 方便搜索
+	Id      string
+	Time    int64
+	Content string // 方便搜索
 }
 
 type Sub struct {
@@ -55,6 +56,8 @@ var themeId2SubIdList = map[string][]string{
 
 var mssChan = make(chan *MessageSubStatus, 100)
 
+var mssList = []*MessageSubStatus{}
+
 func main() {
 	port := ":8080"
 	fmt.Println("http://127.0.0.1" + port)
@@ -72,23 +75,41 @@ func main() {
 		if theme.Method != request.Method {
 			return
 		}
-		subIdList := themeId2SubIdList[themeId]
-		message := Message{
-			Id:   "message1",
-			Time: time.Now().Unix(),
-			Body: "this is a message",
-		}
-		for _, subId := range subIdList {
-			mss := &MessageSubStatus{
-				Id:         "mssId1",
-				MessageId:  message.Id,
-				SubId:      subId,
-				Status:     MessageSubStatus2,
-				RetryTimes: 0,
-			}
-			mssChan <- mss
-		}
+		ReceiverMessage(themeId, "this is a message")
 	})
+	go SendMessage()
 	err := http.ListenAndServe(port, nil)
 	Err.IfPanic(err)
+}
+
+func ReceiverMessage(themeId string, content string) {
+	subIdList := themeId2SubIdList[themeId]
+	message := Message{
+		Id:      "message1",
+		Time:    time.Now().Unix(),
+		Content: content,
+	}
+	for _, subId := range subIdList {
+		mss := &MessageSubStatus{
+			Id:         "mssId1",
+			MessageId:  message.Id,
+			SubId:      subId,
+			Status:     MessageSubStatus2,
+			RetryTimes: 0,
+		}
+		mssList = append(mssList, mss)
+		Echo.Json("receive:", mssList)
+		mssChan <- mss
+	}
+}
+
+func SendMessage() {
+	for mss := range mssChan {
+		for i := range mssList {
+			if mssList[i].Id == mss.Id {
+				mssList[i].Status = MessageSubStatus3
+			}
+		}
+		Echo.Json("send:", mssList)
+	}
 }
