@@ -51,7 +51,7 @@ var id2ThemeMap = map[string]*Theme{
 }
 
 var themeId2SubIdList = map[string][]string{
-	"1": {"11", "12", "13"},
+	"1": {"a", "b"},
 }
 
 var mssChan = make(chan *MessageSubStatus, 100)
@@ -82,6 +82,8 @@ func main() {
 	Err.IfPanic(err)
 }
 
+var mssId = 0
+
 func ReceiverMessage(themeId string, content string) {
 	subIdList := themeId2SubIdList[themeId]
 	message := Message{
@@ -91,7 +93,7 @@ func ReceiverMessage(themeId string, content string) {
 	}
 	for _, subId := range subIdList {
 		mss := &MessageSubStatus{
-			Id:         "mssId1",
+			Id:         fmt.Sprintf("mssId.%d", mssId),
 			MessageId:  message.Id,
 			SubId:      subId,
 			Status:     MessageSubStatus2,
@@ -100,6 +102,7 @@ func ReceiverMessage(themeId string, content string) {
 		mssList = append(mssList, mss)
 		Echo.Json("receive:", mssList)
 		mssChan <- mss
+		mssId++
 	}
 }
 
