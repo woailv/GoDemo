@@ -9,7 +9,7 @@ import (
 func TestA(t *testing.T) {
 	go SendMessage()
 	for i := 0; ; i++ {
-		ReceiverMessage("1", fmt.Sprintf("this is a message:%d", i))
+		ReceiverMessage("a", fmt.Sprintf("this is a message:%d", i))
 		time.Sleep(time.Second * 3)
 	}
 }

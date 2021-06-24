@@ -1,5 +1,13 @@
 package main
 
+var mssChanLen = 5
+
+var mssChan = make(chan *MessageSubStatus, mssChanLen)
+
+var mssList = []*MessageSubStatus{}
+
+var mssStatus1List = []*MessageSubStatus{}
+
 const (
 	MessageSubStatus1 = 1 // 待发送
 	MessageSubStatus2 = 2 // 队列中

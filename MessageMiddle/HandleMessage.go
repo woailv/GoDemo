@@ -1,54 +1,41 @@
 package main
 
 import (
-	"GoDemo/Echo"
 	"fmt"
 	"time"
 )
 
-var id2ThemeMap = map[string]*Theme{
-	"1": {Id: "1", Name: "a", Method: "GET", Url: "/1"},
-}
-
-var themeId2SubIdList = map[string][]string{
-	"1": {"a", "b"},
-}
-
-var mssChan = make(chan *MessageSubStatus, 100)
-
-var mssList = []*MessageSubStatus{}
-
-var mssId = 0
+var id = 0
 
 func ReceiverMessage(themeId string, content string) {
 	subIdList := themeId2SubIdList[themeId]
 	message := Message{
-		Id:      "message1",
+		Id:      fmt.Sprintf("messageId.%d", id),
 		Time:    time.Now().Unix(),
 		Content: content,
 	}
 	for _, subId := range subIdList {
 		mss := &MessageSubStatus{
-			Id:         fmt.Sprintf("mssId.%d", mssId),
+			Id:         fmt.Sprintf("mssId.%d", id),
 			MessageId:  message.Id,
 			SubId:      subId,
-			Status:     MessageSubStatus2,
+			Status:     MessageSubStatus1,
 			RetryTimes: 0,
 		}
 		mssList = append(mssList, mss)
-		Echo.Json("receive:", mssList)
-		mssChan <- mss
-		mssId++
+		if len(mssChan) < mssChanLen {
+			mss.Status = MessageSubStatus2
+			mssChan <- mss
+		} else {
+			mssStatus1List = append(mssStatus1List, mss)
+		}
+		id++
 	}
 }
 
 func SendMessage() {
 	for mss := range mssChan {
-		for i := range mssList {
-			if mssList[i].Id == mss.Id {
-				mssList[i].Status = MessageSubStatus3
-			}
-		}
-		Echo.Json("send:", mssList)
+		panic("TODO")
+		_ = subId2SubMap[mss.SubId]
 	}
 }
