@@ -1,11 +1,18 @@
 package main
 
+import "GoDemo/Echo"
+
 type Sub struct {
 	Id            string
 	ThemeId       string
 	Name          string
 	Url           string
 	MaxRetryTimes int
+}
+
+func (sub *Sub) SendMessage(message *Message) error {
+	Echo.Json("sub send message:", message)
+	return nil
 }
 
 var subId2SubMap = map[string]*Sub{

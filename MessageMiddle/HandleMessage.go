@@ -1,6 +1,7 @@
 package main
 
 import (
+	"GoDemo/Echo"
 	"fmt"
 	"time"
 )
@@ -9,10 +10,15 @@ var id = 0
 
 func ReceiverMessage(themeId string, content string) {
 	subIdList := themeId2SubIdList[themeId]
-	message := Message{
+	message := &Message{
 		Id:      fmt.Sprintf("messageId.%d", id),
 		Time:    time.Now().Unix(),
 		Content: content,
+	}
+	err := MessageSave(message)
+	if err != nil {
+		Echo.Json("保存消息失败:", err)
+		return
 	}
 	for _, subId := range subIdList {
 		mss := &MessageSubStatus{
@@ -35,7 +41,18 @@ func ReceiverMessage(themeId string, content string) {
 
 func SendMessage() {
 	for mss := range mssChan {
-		panic("TODO")
-		_ = subId2SubMap[mss.SubId]
+		sub := SubGetById(mss.SubId)
+		if sub == nil {
+			Echo.Json("订阅中断:", mss.SubId)
+			continue
+		}
+		message := MessageGetById(mss.MessageId)
+		if message == nil {
+			Echo.Json("消息丢失:", mss.MessageId)
+		}
+		err := sub.SendMessage(message)
+		if err != nil {
+			Echo.Json("消息发送失败:", mss.Id)
+		}
 	}
 }
