@@ -28,12 +28,19 @@ func ReceiverMessage(themeId string, content string) {
 			Status:     MessageSubStatus1,
 			RetryTimes: 0,
 		}
-		mssList = append(mssList, mss)
+		err = MessageSubStatusSave(mss)
+		if err != nil {
+			Echo.Json("mss 保存错误:", err)
+			continue
+		}
 		if len(mssChan) < mssChanLen {
 			mss.Status = MessageSubStatus2
 			mssChan <- mss
-		} else {
-			mssStatus1List = append(mssStatus1List, mss)
+			err = MessageSubStatusSave(mss)
+			if err != nil {
+				Echo.Json("mss 修改错误:", err)
+				continue
+			}
 		}
 		id++
 	}

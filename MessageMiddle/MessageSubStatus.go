@@ -1,12 +1,18 @@
 package MessageMiddle
 
+import "sync"
+
 var mssChanLen = 5
 
 var mssChan = make(chan *MessageSubStatus, mssChanLen)
 
-var mssList = []*MessageSubStatus{}
+var id2MessageSubStatusMap = map[string]*MessageSubStatus{}
 
-var mssStatus1List = []*MessageSubStatus{}
+var id2MessageSubStatusMapLock = &sync.Mutex{}
+
+func LockMessageSubStatusFn(fn func()) {
+	LockFn(id2MessageSubStatusMapLock, fn)
+}
 
 const (
 	MessageSubStatus1 = 1 // 待发送
@@ -21,4 +27,11 @@ type MessageSubStatus struct {
 	SubId      string
 	Status     int8
 	RetryTimes int
+}
+
+func MessageSubStatusSave(mss *MessageSubStatus) error {
+	LockMessageSubStatusFn(func() {
+		id2MessageSubStatusMap[mss.Id] = mss
+	})
+	return nil
 }
