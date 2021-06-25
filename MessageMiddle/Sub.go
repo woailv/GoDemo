@@ -10,11 +10,12 @@ type Sub struct {
 	ThemeId       string
 	Name          string
 	Url           string
+	Method        string
 	MaxRetryTimes int
 }
 
 func (sub *Sub) SendMessage(message *Message) error {
-	Echo.Json("sub send message:", message)
+	Echo.JsonLnf("theme id:%s, sub id:%s, message id:%s", sub.ThemeId, sub.Id, message.Id)
 	return nil
 }
 
@@ -30,6 +31,7 @@ func SubSave(sub *Sub) error {
 	LockSubFn(func() {
 		subId2SubMap[sub.Id] = sub
 	})
+	_ = ThemeAddSub(sub.ThemeId, sub.Id)
 	return nil
 }
 

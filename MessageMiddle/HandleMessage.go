@@ -6,12 +6,13 @@ import (
 	"time"
 )
 
-var id = 0
+var mssId = 0
+var messageId = 0
 
 func ReceiverMessage(themeId string, content string) {
 	subIdList := ThemeGetAllSubIdByThemeId(themeId)
 	message := &Message{
-		Id:      fmt.Sprintf("messageId.%d", id),
+		Id:      fmt.Sprintf("messageId.%d", messageId),
 		Time:    time.Now().Unix(),
 		Content: content,
 	}
@@ -22,7 +23,7 @@ func ReceiverMessage(themeId string, content string) {
 	}
 	for _, subId := range subIdList {
 		mss := &MessageSubStatus{
-			Id:         fmt.Sprintf("mssId.%d", id),
+			Id:         fmt.Sprintf("mssId.%d", mssId),
 			MessageId:  message.Id,
 			SubId:      subId,
 			Status:     MessageSubStatus1,
@@ -42,8 +43,9 @@ func ReceiverMessage(themeId string, content string) {
 				continue
 			}
 		}
-		id++
+		mssId++
 	}
+	messageId++
 }
 
 func SendMessage() {

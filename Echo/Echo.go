@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 func Json(i ...interface{}) {
+	out := _out(i...)
+	fmt.Println(out...)
+}
+
+func _out(i ...interface{}) []interface{} {
 	out := []interface{}{}
 	for _, item := range i {
 		tk := reflect.TypeOf(item).Kind()
@@ -20,5 +26,13 @@ func Json(i ...interface{}) {
 			out = append(out, item)
 		}
 	}
-	fmt.Println(out...)
+	return out
+}
+
+func JsonLnf(format string, i ...interface{}) {
+	if !strings.Contains(format, "\n") {
+		format += "\n"
+	}
+	out := _out(i...)
+	fmt.Printf(format, out...)
 }
