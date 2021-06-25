@@ -21,10 +21,10 @@ func (sub *Sub) SendMessage(message *Message) error {
 
 var id2SubMap = map[string]*Sub{}
 
-var subId2SubMapLock = &sync.Mutex{}
+var id2SubMapLock = &sync.Mutex{}
 
 func LockSubFn(fn func()) {
-	LockFn(subId2SubMapLock, fn)
+	LockFn(id2SubMapLock, fn)
 }
 
 func SubSave(sub *Sub) error {
@@ -41,4 +41,13 @@ func SubGetById(id string) *Sub {
 		sub = id2SubMap[id]
 	})
 	return sub
+}
+
+func SubDelete(id ...string) {
+	LockSubFn(func() {
+		for _, v := range id {
+			delete(id2SubMap, v)
+		}
+	})
+	SubDeleteAllSubMessageIdsBySubId(id...)
 }

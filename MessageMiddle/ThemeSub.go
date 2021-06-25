@@ -32,3 +32,12 @@ func ThemeGetAllSubIdByThemeId(themeId string) []string {
 	})
 	return subIds
 }
+
+func ThemeDeleteAllSubByThemeId(themeId string) error {
+	subIds := ThemeGetAllSubIdByThemeId(themeId)
+	LockThemeSubFn(func() {
+		delete(themeId2SubId2NilMap, themeId)
+	})
+	SubDelete(subIds...)
+	return nil
+}

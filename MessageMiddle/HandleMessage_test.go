@@ -35,7 +35,7 @@ func InitData() {
 func TestA(t *testing.T) {
 	InitData()
 	go SendMessage()
-	for i := 0; ; i++ {
+	for i := 0; i < 10; i++ {
 		ReceiverMessage("theme1", fmt.Sprintf("this is a message:%d", i))
 		time.Sleep(time.Second * 3)
 	}

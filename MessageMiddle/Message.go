@@ -30,3 +30,9 @@ func MessageGetById(id string) *Message {
 	})
 	return message
 }
+
+func MessageDelete(id string) {
+	LockMessageFn(func() {
+		delete(id2MessageMap, id)
+	})
+}

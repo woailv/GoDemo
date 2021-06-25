@@ -61,6 +61,7 @@ func ThemeDelete(id string) error {
 	LockThemeFn(func() {
 		delete(id2Theme, id)
 	})
+	_ = ThemeDeleteAllSubByThemeId(id)
 	// ...
 	return nil
 }
