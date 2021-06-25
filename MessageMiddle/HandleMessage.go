@@ -9,7 +9,7 @@ import (
 var id = 0
 
 func ReceiverMessage(themeId string, content string) {
-	subIdList := themeId2SubIdList[themeId]
+	subIdList := ThemeGetAllSubIdByThemeId(themeId)
 	message := &Message{
 		Id:      fmt.Sprintf("messageId.%d", id),
 		Time:    time.Now().Unix(),
