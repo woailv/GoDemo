@@ -1,7 +1,7 @@
-package main
+package MessageMiddle
 
 import (
-	"strconv"
+	"sync"
 )
 
 type Theme struct {
@@ -10,8 +10,6 @@ type Theme struct {
 	Method string
 	Path   string // 忽略域名/IP的路径 接收消息使用
 }
-
-var themeList = []Theme{}
 
 var path2ThemeMap = map[string]*Theme{
 	"/a": {
@@ -28,29 +26,23 @@ var path2ThemeMap = map[string]*Theme{
 	},
 }
 
-var themeId2SubIdList = map[string][]string{
-	"a": {"sub1", "sub2"},
-	"b": {"sub3", "sub4"},
+var path2ThemeMapLock = &sync.Mutex{}
+
+func LockThemePathFn(fn func()) {
+	LockFn(path2ThemeMapLock, fn)
 }
 
 func ThemeGetByPath(path string) *Theme {
-	return path2ThemeMap[path]
+	var theme *Theme
+	LockThemePathFn(func() {
+		theme = path2ThemeMap[path]
+	})
+	return theme
 }
 
 func ThemeSave(theme *Theme) error {
-	if theme.Id == "" {
-		theme.Id = strconv.Itoa(len(themeList))
-		themeList = append(themeList, *theme)
-	} else {
-		for i := 0; i < len(themeList); i++ {
-			if themeList[i].Id == theme.Id {
-				themeList[i] = *theme
-				break
-			}
-			if i == len(themeList)-1 {
-				return ErrNotFund
-			}
-		}
-	}
+	LockThemePathFn(func() {
+		path2ThemeMap[theme.Path] = theme
+	})
 	return nil
 }

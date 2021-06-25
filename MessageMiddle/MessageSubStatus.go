@@ -1,4 +1,4 @@
-package main
+package MessageMiddle
 
 var mssChanLen = 5
 

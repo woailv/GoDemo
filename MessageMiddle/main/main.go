@@ -2,6 +2,7 @@ package main
 
 import (
 	"GoDemo/Err"
+	"GoDemo/MessageMiddle"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,7 @@ func main() {
 		if strings.Contains(request.URL.Path, ".ico") {
 			return
 		}
-		theme := ThemeGetByPath(request.URL.Path)
+		theme := MessageMiddle.ThemeGetByPath(request.URL.Path)
 		if theme == nil {
 			return
 		}
@@ -36,9 +37,9 @@ func main() {
 			request.Body.Close()
 			content = string(bs)
 		}
-		ReceiverMessage(theme.Id, content)
+		MessageMiddle.ReceiverMessage(theme.Id, content)
 	})
-	go SendMessage()
+	go MessageMiddle.SendMessage()
 	err := http.ListenAndServe(port, nil)
 	Err.IfPanic(err)
 }

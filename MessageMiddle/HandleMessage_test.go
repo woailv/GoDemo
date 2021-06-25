@@ -1,4 +1,4 @@
-package main
+package MessageMiddle
 
 import (
 	"fmt"
