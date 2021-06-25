@@ -37,6 +37,6 @@ func TestA(t *testing.T) {
 	go SendMessage()
 	for i := 0; i < 10; i++ {
 		ReceiverMessage("theme1", fmt.Sprintf("this is a message:%d", i))
-		time.Sleep(time.Second * 3)
+		time.Sleep(time.Second)
 	}
 }
