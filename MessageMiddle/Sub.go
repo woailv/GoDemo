@@ -19,7 +19,7 @@ func (sub *Sub) SendMessage(message *Message) error {
 	return nil
 }
 
-var subId2SubMap = map[string]*Sub{}
+var id2SubMap = map[string]*Sub{}
 
 var subId2SubMapLock = &sync.Mutex{}
 
@@ -29,7 +29,7 @@ func LockSubFn(fn func()) {
 
 func SubSave(sub *Sub) error {
 	LockSubFn(func() {
-		subId2SubMap[sub.Id] = sub
+		id2SubMap[sub.Id] = sub
 	})
 	_ = ThemeAddSub(sub.ThemeId, sub.Id)
 	return nil
@@ -38,7 +38,7 @@ func SubSave(sub *Sub) error {
 func SubGetById(id string) *Sub {
 	var sub *Sub
 	LockSubFn(func() {
-		sub = subId2SubMap[id]
+		sub = id2SubMap[id]
 	})
 	return sub
 }
