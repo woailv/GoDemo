@@ -22,22 +22,22 @@ func ReceiverMessage(themeId string, content string) {
 		return
 	}
 	for _, subId := range subIdList {
-		mss := &MessageSubStatus{
+		mss := &SubMessage{
 			Id:         fmt.Sprintf("mssId.%d", mssId),
 			MessageId:  message.Id,
 			SubId:      subId,
-			Status:     MessageSubStatus1,
+			Status:     SubMessageStatus1,
 			RetryTimes: 0,
 		}
-		err = MessageSubStatusSave(mss)
+		err = SubMessageSave(mss)
 		if err != nil {
 			Echo.Json("mss 保存错误:", err)
 			continue
 		}
 		if len(mssChan) < mssChanLen {
-			mss.Status = MessageSubStatus2
+			mss.Status = SubMessageStatus2
 			mssChan <- mss
-			err = MessageSubStatusSave(mss)
+			err = SubMessageSave(mss)
 			if err != nil {
 				Echo.Json("mss 修改错误:", err)
 				continue
