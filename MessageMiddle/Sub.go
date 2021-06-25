@@ -1,6 +1,9 @@
 package MessageMiddle
 
-import "GoDemo/Echo"
+import (
+	"GoDemo/Echo"
+	"sync"
+)
 
 type Sub struct {
 	Id            string
@@ -15,37 +18,25 @@ func (sub *Sub) SendMessage(message *Message) error {
 	return nil
 }
 
-var subId2SubMap = map[string]*Sub{
-	"sub1": {
-		Id:            "sub1",
-		ThemeId:       "a",
-		Name:          "sub1name",
-		Url:           "http://127.0.0.1:9001",
-		MaxRetryTimes: 3,
-	},
-	"sub2": {
-		Id:            "sub2",
-		ThemeId:       "a",
-		Name:          "sub2name",
-		Url:           "http://127.0.0.1:9002",
-		MaxRetryTimes: 3,
-	},
-	"sub3": {
-		Id:            "sub3",
-		ThemeId:       "b",
-		Name:          "sub3name",
-		Url:           "http://127.0.0.1:9003",
-		MaxRetryTimes: 3,
-	},
-	"sub4": {
-		Id:            "sub4",
-		ThemeId:       "b",
-		Name:          "sub4name",
-		Url:           "http://127.0.0.1:9004",
-		MaxRetryTimes: 3,
-	},
+var subId2SubMap = map[string]*Sub{}
+
+var subId2SubMapLock = &sync.Mutex{}
+
+func LockSubFn(fn func()) {
+	LockFn(subId2SubMapLock, fn)
+}
+
+func SubSave(sub *Sub) error {
+	LockSubFn(func() {
+		subId2SubMap[sub.Id] = sub
+	})
+	return nil
 }
 
 func SubGetById(id string) *Sub {
-	return subId2SubMap[id]
+	var sub *Sub
+	LockSubFn(func() {
+		sub = subId2SubMap[id]
+	})
+	return sub
 }
