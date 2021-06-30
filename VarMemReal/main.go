@@ -14,11 +14,15 @@ type T struct {
 
 func main() {
 	a := []T{{Name: "1243", Ages: []int{1, 2, 3}, m: map[string]string{"S": "a"}}}
-	result := GetValMem(reflect.ValueOf(a))
+	result := GetValMem(a)
 	fmt.Println("result:", result)
 }
 
-func GetValMem(rv reflect.Value) int {
+func GetValMem(i interface{}) int {
+	return GetRValMem(reflect.ValueOf(i))
+}
+
+func GetRValMem(rv reflect.Value) int {
 	tp := rv.Type()
 	switch tp.Kind() {
 	case reflect.Bool:
@@ -56,7 +60,7 @@ func GetValMem(rv reflect.Value) int {
 	case reflect.Array, reflect.Slice:
 		result := 24
 		for i := 0; i < rv.Len(); i++ {
-			result += GetValMem(rv.Index(i))
+			result += GetRValMem(rv.Index(i))
 		}
 		return result
 	case reflect.Chan:
@@ -67,19 +71,19 @@ func GetValMem(rv reflect.Value) int {
 		result := 8
 		keys := rv.MapKeys()
 		for _, key := range keys {
-			result += GetValMem(key)
-			result += GetValMem(rv.MapIndex(key))
+			result += GetRValMem(key)
+			result += GetRValMem(rv.MapIndex(key))
 		}
 		return result
 	case reflect.Ptr:
 		rv.Elem()
-		return 8 + GetValMem(rv.Elem())
+		return 8 + GetRValMem(rv.Elem())
 	case reflect.String:
 		return 16 + len(rv.String())
 	case reflect.Struct:
 		result := 0
 		for i := 0; i < rv.NumField(); i++ {
-			result += GetValMem(rv.Field(i))
+			result += GetRValMem(rv.Field(i))
 		}
 		return result
 	default:
