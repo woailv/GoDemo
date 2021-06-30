@@ -6,6 +6,11 @@ import (
 )
 
 func main() {
+	//timePrint()
+	fmt.Println(byte(1))
+}
+
+func timePrint() {
 	s := []int64{
 		1623806954,
 	}
