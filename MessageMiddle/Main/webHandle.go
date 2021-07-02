@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"reflect"
 	"strings"
 )
 
 func webHandle(request *http.Request) (interface{}, error) {
+	if strings.Contains(request.URL.Path, ".ico") {
+		return nil, nil
+	}
 	if request.Header.Get("Content-Length") > "9999" {
 		return nil, errors.New("content too large")
 	}
@@ -26,8 +30,9 @@ func webHandle(request *http.Request) (interface{}, error) {
 
 func handle(path string, method string, bList []byte) (interface{}, error) {
 	var handle interface{}
-	actionDesc := strings.Split(path, "/")
+	actionDesc := strings.Split(path[1:], "/")
 	if len(actionDesc) != 2 {
+		log.Println(actionDesc)
 		panic("TODO")
 	}
 	switch actionDesc[0] {
@@ -48,7 +53,7 @@ func handle(path string, method string, bList []byte) (interface{}, error) {
 		// struct 从body url 中获取数据, base type 从url中获取数据
 		switch vf.Type().In(i).Kind() {
 		case reflect.Ptr:
-			if method != "GET" {
+			if method == "GET" { // TODO
 				value := reflect.New(vf.Type().In(i).Elem())
 				err := json.Unmarshal(bList, value.Interface())
 				if err != nil {
