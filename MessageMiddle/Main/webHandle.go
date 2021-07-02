@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 func webHandle(request *http.Request) (interface{}, error) {
@@ -18,13 +19,26 @@ func webHandle(request *http.Request) (interface{}, error) {
 		return nil, errors.New("read body error")
 	}
 	request.Body.Close()
+	method := request.Method
+	path := request.URL.Path
+	return handle(path, method, bList)
+}
+
+func handle(path string, method string, bList []byte) (interface{}, error) {
 	var handle interface{}
-	switch request.URL.Path {
-	case "themeAdd":
-		handle = MessageMiddle.ThemeSave
-	case "subAdd":
-		handle = MessageMiddle.SubSave
-	case "themeList":
+	actionDesc := strings.Split(path, "/")
+	if len(actionDesc) != 2 {
+		panic("TODO")
+	}
+	switch actionDesc[0] {
+	case "theme":
+		switch actionDesc[1] {
+		case "save":
+			handle = MessageMiddle.ThemeSave
+		case "list":
+		default:
+			handle = MessageMiddle.ThemeGetById
+		}
 	default:
 		return nil, errors.New("not found")
 	}
@@ -34,16 +48,20 @@ func webHandle(request *http.Request) (interface{}, error) {
 		// struct 从body url 中获取数据, base type 从url中获取数据
 		switch vf.Type().In(i).Kind() {
 		case reflect.Ptr:
-			if request.Method != "GET" {
-				err = json.Unmarshal(bList, reflect.New(reflect.TypeOf(vf.Type().In(i).Elem())).Interface())
+			if method != "GET" {
+				value := reflect.New(vf.Type().In(i).Elem())
+				err := json.Unmarshal(bList, value.Interface())
 				if err != nil {
 					return nil, errors.New("param error")
 				}
+				callParam = append(callParam, value)
 			} else {
 				panic("TODO")
 			}
 		case reflect.Struct:
 		case reflect.Map:
+		case reflect.String: //id从path param中获取
+			callParam = append(callParam, reflect.ValueOf(actionDesc[1]))
 		default:
 			panic("TODO")
 		}
@@ -51,7 +69,11 @@ func webHandle(request *http.Request) (interface{}, error) {
 	vfResult := vf.Call(callParam)
 
 	if len(vfResult) == 1 {
-		return nil, vfResult[0].Interface().(error)
+		err, ok := vfResult[0].Interface().(error)
+		if ok {
+			return nil, err
+		}
+		return vfResult[0].Interface(), nil
 	}
 	if len(vfResult) == 2 {
 		return vfResult[0].Interface(), vfResult[1].Interface().(error)
