@@ -16,8 +16,9 @@ type T struct {
 func main() {
 	//f1()
 	//GenValMonitor("./VarMemReal/Gvar.go")
-	r := MonitorGenVar("a")
-	fmt.Println(r)
+	//r := MonitorGenVar("a")
+	//fmt.Println(r)
+	fmt.Println(1024 * 1024 * 1024 * 32 / 60)
 }
 
 // GenValMonitor TODO
