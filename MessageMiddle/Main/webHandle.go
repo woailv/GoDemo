@@ -19,36 +19,34 @@ func webHandle(request *http.Request) (interface{}, error) {
 	}
 	request.Body.Close()
 	var handle interface{}
-	var param interface{}
 	switch request.URL.Path {
 	case "themeAdd":
-		param = &MessageMiddle.Theme{}
 		handle = MessageMiddle.ThemeSave
 	case "subAdd":
-		param = &MessageMiddle.Sub{}
 		handle = MessageMiddle.SubSave
 	case "themeList":
 	default:
 		return nil, errors.New("not found")
 	}
-	if param != nil {
-		if request.Method != "GET" {
-			err = json.Unmarshal(bList, param)
-			if err != nil {
-				return nil, errors.New("param error")
-			}
-		} else {
-			panic("TODO")
-		}
-	}
 	vf := reflect.ValueOf(handle)
 	var callParam []reflect.Value
-	switch vf.Type().NumIn() {
-	case 0:
-	case 1:
-		callParam = append(callParam, reflect.ValueOf(param))
-	default:
-		panic("TODO")
+	for i := 0; i < vf.Type().NumIn(); i++ {
+		// struct 从body url 中获取数据, base type 从url中获取数据
+		switch vf.Type().In(i).Kind() {
+		case reflect.Ptr:
+			if request.Method != "GET" {
+				err = json.Unmarshal(bList, reflect.New(reflect.TypeOf(vf.Type().In(i).Elem())).Interface())
+				if err != nil {
+					return nil, errors.New("param error")
+				}
+			} else {
+				panic("TODO")
+			}
+		case reflect.Struct:
+		case reflect.Map:
+		default:
+			panic("TODO")
+		}
 	}
 	vfResult := vf.Call(callParam)
 
