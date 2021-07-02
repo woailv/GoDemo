@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 )
 
 func main() {
-	timePrint()
+	a, _ := strconv.ParseInt("1625192931284", 10, 64)
+	fmt.Println(a)
+	fmt.Println(time.Unix(0, a*1000000))
+	//timePrint()
 }
 
 func timePrint() {
