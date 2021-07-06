@@ -2,7 +2,6 @@ package main
 
 import (
 	"GoDemo/MessageMiddle"
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -30,14 +29,14 @@ func webHandle(request *http.Request) (interface{}, error) {
 
 func handle(path string, method string, bList []byte) (interface{}, error) {
 	var handle interface{}
-	actionDesc := strings.Split(path[1:], "/")
-	if len(actionDesc) != 2 {
-		log.Println(actionDesc)
+	pathElemList := strings.Split(path[1:], "/")
+	if len(pathElemList) < 2 {
+		log.Println(pathElemList)
 		panic("TODO")
 	}
-	switch actionDesc[0] {
+	switch pathElemList[0] {
 	case "theme":
-		switch actionDesc[1] {
+		switch pathElemList[1] {
 		case "save":
 			handle = MessageMiddle.ThemeSave
 		case "list":
@@ -49,30 +48,21 @@ func handle(path string, method string, bList []byte) (interface{}, error) {
 	}
 	vf := reflect.ValueOf(handle)
 	var callParam []reflect.Value
-	for i := 0; i < vf.Type().NumIn(); i++ {
-		// struct 从body url 中获取数据, base type 从url中获取数据
-		switch vf.Type().In(i).Kind() {
-		case reflect.Ptr:
-			if method == "GET" { // TODO
-				value := reflect.New(vf.Type().In(i).Elem())
-				err := json.Unmarshal(bList, value.Interface())
-				if err != nil {
-					return nil, errors.New("param error")
-				}
-				callParam = append(callParam, value)
-			} else {
-				panic("TODO")
-			}
-		case reflect.Struct:
-		case reflect.Map:
+	switch vf.Type().NumIn() {
+	case 0:
+	case 1:
+		switch vf.Type().In(0).Kind() {
+		case reflect.Ptr, reflect.Struct, reflect.Map:
 		case reflect.String: //id从path param中获取
-			callParam = append(callParam, reflect.ValueOf(actionDesc[1]))
+			callParam = append(callParam, reflect.ValueOf(pathElemList[len(pathElemList)-1]))
 		default:
 			panic("TODO")
 		}
+	default:
+		panic("参数个数不匹配")
 	}
-	vfResult := vf.Call(callParam)
 
+	vfResult := vf.Call(callParam)
 	if len(vfResult) == 1 {
 		err, ok := vfResult[0].Interface().(error)
 		if ok {

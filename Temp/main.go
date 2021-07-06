@@ -2,15 +2,15 @@ package main
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 )
 
 func main() {
-	a, _ := strconv.ParseInt("1625192931284", 10, 64)
-	fmt.Println(a)
-	fmt.Println(time.Unix(0, a*1000000))
+	//a, _ := strconv.ParseInt("1625192931284", 10, 64)
+	//fmt.Println(a)
+	//fmt.Println(time.Unix(0, a*1000000))
 	//timePrint()
+	fmt.Println(len("K1TimeSourceKindOriginalTransactionIdTransactionIdFromKindToSubOrderTrackStatus"))
 }
 
 func timePrint() {
