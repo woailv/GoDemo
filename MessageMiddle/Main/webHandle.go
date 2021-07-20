@@ -53,10 +53,11 @@ func handle(path string, method string, bList []byte) (interface{}, error) {
 	case 1:
 		switch vf.Type().In(0).Kind() {
 		case reflect.Ptr, reflect.Struct, reflect.Map:
+
 		case reflect.String: //id从path param中获取
 			callParam = append(callParam, reflect.ValueOf(pathElemList[len(pathElemList)-1]))
 		default:
-			panic("TODO")
+			panic("未处理的参数类型")
 		}
 	default:
 		panic("参数个数不匹配")
