@@ -16,7 +16,7 @@ func main() {
 	for i := 0; i < 5; i++ {
 		if i == 3 {
 			go func() {
-				for true {
+				for false {
 					m[3] = 3
 					time.Sleep(time.Millisecond)
 				}
@@ -24,11 +24,34 @@ func main() {
 		}
 		go func(k int) {
 			for true {
-				n := m[k]
-				Echo.Json(n)
+				v := languageMapGetByTextAndKind("123", LanguageEN)
+				Echo.Json(v)
 				time.Sleep(time.Millisecond)
 			}
 		}(i)
 	}
 	select {}
+}
+
+const LanguageEN = "en"
+const LanguageFA = "fa"
+
+// textToKindToText
+var languageMap = map[string]map[string]string{
+	"123": {
+		LanguageEN: "123",
+		LanguageFA: "123",
+	},
+}
+
+func languageMapGetByTextAndKind(text, kind string) string {
+	m := languageMap[text]
+	if m == nil {
+		return text
+	}
+	v, ok := m[kind]
+	if !ok {
+		return text
+	}
+	return v
 }
