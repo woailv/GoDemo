@@ -126,7 +126,6 @@ func New(name string, dataPath string, maxBytesPerFile int64,
 		syncTimeout:       syncTimeout,
 		logf:              logf,
 	}
-
 	// no need to lock here, nothing else could possibly be touching this instance
 	err := d.retrieveMetaData()
 	if err != nil && !os.IsNotExist(err) {
