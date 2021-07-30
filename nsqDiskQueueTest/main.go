@@ -1,19 +1,40 @@
-package diskqueue
+package main
 
 import (
+	"GoDemo/Err"
 	"bufio"
 	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"io"
+	"log"
+	"math"
 	"math/rand"
 	"os"
 	"path"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 )
+
+func main() {
+	var err error
+	dq := New("d1", "./", 15, 1, 1024, 1, time.Second, func(lvl LogLevel, f string, args ...interface{}) {
+		fmt.Println(lvl, fmt.Sprintf(f, args...))
+	})
+	go func() {
+		for i := 0; i < math.MaxInt64; i++ {
+			err = dq.Put([]byte(strconv.Itoa(i)))
+			Err.IfPanic(err)
+			time.Sleep(time.Second)
+		}
+	}()
+	for data := range dq.ReadChan() {
+		log.Println(string(data))
+	}
+}
 
 type LogLevel int
 
@@ -46,7 +67,6 @@ func (l LogLevel) String() string {
 type Interface interface {
 	Put([]byte) error
 	ReadChan() <-chan []byte // this is expected to be an *unbuffered* channel
-	PersistMetaReadData() error
 	Close() error
 	Delete() error
 	Depth() int64
@@ -218,12 +238,7 @@ func (d *diskQueue) Empty() error {
 func (d *diskQueue) deleteAllFiles() error {
 	err := d.skipToNextRWFile()
 
-	innerErr := os.Remove(d.metaWriteDataFileName())
-	if innerErr != nil && !os.IsNotExist(innerErr) {
-		d.logf(ERROR, "DISKQUEUE(%s) failed to remove metadata file - %s", d.name, innerErr)
-		return innerErr
-	}
-	innerErr = os.Remove(d.metaReadDataFileName())
+	innerErr := os.Remove(d.metaDataFileName())
 	if innerErr != nil && !os.IsNotExist(innerErr) {
 		d.logf(ERROR, "DISKQUEUE(%s) failed to remove metadata file - %s", d.name, innerErr)
 		return innerErr
@@ -325,7 +340,7 @@ func (d *diskQueue) readOne() ([]byte, error) {
 	// TODO: each data file should embed the maxBytesPerFile
 	// as the first 8 bytes (at creation time) ensuring that
 	// the value can change without affecting runtime
-	if d.nextReadPos > d.maxBytesPerFile {
+	if d.nextReadPos >= d.maxBytesPerFile {
 		if d.readFile != nil {
 			d.readFile.Close()
 			d.readFile = nil
@@ -421,7 +436,7 @@ func (d *diskQueue) sync() error {
 		}
 	}
 
-	err := d.persistMetaWriteData()
+	err := d.persistMetaData()
 	if err != nil {
 		return err
 	}
@@ -435,7 +450,7 @@ func (d *diskQueue) retrieveMetaData() error {
 	var f *os.File
 	var err error
 
-	fileName := d.metaWriteDataFileName()
+	fileName := d.metaDataFileName()
 	f, err = os.OpenFile(fileName, os.O_RDONLY, 0600)
 	if err != nil {
 		return err
@@ -443,26 +458,14 @@ func (d *diskQueue) retrieveMetaData() error {
 	defer f.Close()
 
 	var depth int64
-	_, err = fmt.Fscanf(f, "%d\n%d,%d\n",
+	_, err = fmt.Fscanf(f, "%d\n%d,%d\n%d,%d\n",
 		&depth,
-		//&d.readFileNum, &d.readPos,
+		&d.readFileNum, &d.readPos,
 		&d.writeFileNum, &d.writePos)
 	if err != nil {
 		return err
 	}
 	atomic.StoreInt64(&d.depth, depth)
-
-	readFileName := d.metaReadDataFileName()
-	readFile, err := os.OpenFile(readFileName, os.O_RDONLY, 0600)
-	if err != nil {
-		return err
-	}
-	defer readFile.Close()
-	_, err = fmt.Fscanf(readFile, "%d,%d\n",
-		&d.readFileNum, &d.readPos)
-	if err != nil {
-		return err
-	}
 	d.nextReadFileNum = d.readFileNum
 	d.nextReadPos = d.readPos
 
@@ -470,39 +473,11 @@ func (d *diskQueue) retrieveMetaData() error {
 }
 
 // persistMetaData atomically writes state to the filesystem
-//func (d *diskQueue) persistMetaData() error {
-//	var f *os.File
-//	var err error
-//
-//	fileName := d.metaDataFileName()
-//	tmpFileName := fmt.Sprintf("%s.%d.tmp", fileName, rand.Int())
-//
-//	// write to tmp file
-//	f, err = os.OpenFile(tmpFileName, os.O_RDWR|os.O_CREATE, 0600)
-//	if err != nil {
-//		return err
-//	}
-//
-//	_, err = fmt.Fprintf(f, "%d\n%d,%d\n%d,%d\n",
-//		atomic.LoadInt64(&d.depth),
-//		d.readFileNum, d.readPos,
-//		d.writeFileNum, d.writePos)
-//	if err != nil {
-//		f.Close()
-//		return err
-//	}
-//	f.Sync()
-//	f.Close()
-//
-//	// atomically rename
-//	return os.Rename(tmpFileName, fileName)
-//}
-
-func (d *diskQueue) persistMetaWriteData() error {
+func (d *diskQueue) persistMetaData() error {
 	var f *os.File
 	var err error
 
-	fileName := d.metaWriteDataFileName()
+	fileName := d.metaDataFileName()
 	tmpFileName := fmt.Sprintf("%s.%d.tmp", fileName, rand.Int())
 
 	// write to tmp file
@@ -511,8 +486,9 @@ func (d *diskQueue) persistMetaWriteData() error {
 		return err
 	}
 
-	_, err = fmt.Fprintf(f, "%d\n%d,%d\n",
+	_, err = fmt.Fprintf(f, "%d\n%d,%d\n%d,%d\n",
 		atomic.LoadInt64(&d.depth),
+		d.readFileNum, d.readPos,
 		d.writeFileNum, d.writePos)
 	if err != nil {
 		f.Close()
@@ -525,42 +501,8 @@ func (d *diskQueue) persistMetaWriteData() error {
 	return os.Rename(tmpFileName, fileName)
 }
 
-func (d *diskQueue) PersistMetaReadData() error {
-	var f *os.File
-	var err error
-
-	fileName := d.metaReadDataFileName()
-	tmpFileName := fmt.Sprintf("%s.%d.tmp", fileName, rand.Int())
-
-	// write to tmp file
-	f, err = os.OpenFile(tmpFileName, os.O_RDWR|os.O_CREATE, 0600)
-	if err != nil {
-		return err
-	}
-
-	_, err = fmt.Fprintf(f, "%d,%d\n",
-		d.readFileNum, d.readPos)
-	if err != nil {
-		f.Close()
-		return err
-	}
-	f.Sync()
-	f.Close()
-
-	// atomically rename
-	return os.Rename(tmpFileName, fileName)
-}
-
-//func (d *diskQueue) metaDataFileName() string {
-//	return fmt.Sprintf(path.Join(d.dataPath, "%s.diskqueue.meta.dat"), d.name)
-//}
-
-func (d *diskQueue) metaWriteDataFileName() string {
-	return fmt.Sprintf(path.Join(d.dataPath, "%s.diskqueue.meta.write.dat"), d.name)
-}
-
-func (d *diskQueue) metaReadDataFileName() string {
-	return fmt.Sprintf(path.Join(d.dataPath, "%s.diskqueue.meta.read.dat"), d.name)
+func (d *diskQueue) metaDataFileName() string {
+	return fmt.Sprintf(path.Join(d.dataPath, "%s.diskqueue.meta.dat"), d.name)
 }
 
 func (d *diskQueue) fileName(fileNum int64) string {
@@ -679,6 +621,7 @@ func (d *diskQueue) ioLoop() {
 	var r chan []byte
 
 	syncTicker := time.NewTicker(d.syncTimeout)
+
 	for {
 		// dont sync all the time :)
 		if count == d.syncEvery {
@@ -712,6 +655,7 @@ func (d *diskQueue) ioLoop() {
 		// the Go channel spec dictates that nil channel operations (read or write)
 		// in a select are skipped, we set r to d.readChan only when there is data to read
 		case r <- dataRead:
+			count++
 			// moveForward sets needSync flag if a file is removed
 			d.moveForward()
 		case <-d.emptyChan:
