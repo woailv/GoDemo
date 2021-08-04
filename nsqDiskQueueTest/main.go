@@ -21,7 +21,7 @@ import (
 
 func main() {
 	var err error
-	dq := New("d1", "./", 15, 1, 1024, 1, time.Second, func(lvl LogLevel, f string, args ...interface{}) {
+	dq := New("d1", "./", 15, 1, 1024, 0, time.Second, func(lvl LogLevel, f string, args ...interface{}) {
 		fmt.Println(lvl, fmt.Sprintf(f, args...))
 	})
 	go func() {
@@ -29,11 +29,19 @@ func main() {
 			err = dq.Put([]byte(strconv.Itoa(i)))
 			Err.IfPanic(err)
 			time.Sleep(time.Second)
+			if i == 3 {
+				dq.Close()
+				break
+			}
 		}
 	}()
 	for data := range dq.ReadChan() {
 		log.Println(string(data))
+		time.Sleep(time.Second)
+		break
 	}
+	time.Sleep(time.Second)
+	log.Println("end")
 }
 
 type LogLevel int
@@ -183,6 +191,7 @@ func (d *diskQueue) Close() error {
 	if err != nil {
 		return err
 	}
+	close(d.readChan)
 	return d.sync()
 }
 

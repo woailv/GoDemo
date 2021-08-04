@@ -3,7 +3,6 @@ package diskq
 import (
 	"GoDemo/Err"
 	"fmt"
-	"log"
 	"strconv"
 	"testing"
 	"time"
@@ -11,16 +10,19 @@ import (
 
 func TestDiskQueue_Close(t *testing.T) {
 	var err error
-	dq := New("d1", "./", 15, 1, 1024, 1, time.Second, func(lvl LogLevel, f string, args ...interface{}) {
+	dqWrite := New("d1", "./", 15, 1, 1024, 1, time.Second, func(lvl LogLevel, f string, args ...interface{}) {
 		//fmt.Println(lvl, fmt.Sprintf(f, args...))
 	})
-	start := time.Now()
+	dqRead := New("d1", "./", 15, 1, 1024, 1, time.Second, func(lvl LogLevel, f string, args ...interface{}) {
+		//fmt.Println(lvl, fmt.Sprintf(f, args...))
+	})
+
 	//err = dq.Empty()
 	Err.IfPanic(err)
 	go func() {
-		for i := 0; false; i++ {
+		for i := 0; true; i++ {
 			//err := dq.Put([]byte(time.Now().Format(time.RFC3339)))
-			err := dq.Put([]byte(strconv.Itoa(i)))
+			err := dqWrite.Put([]byte(strconv.Itoa(i)))
 			Err.IfPanic(err)
 			time.Sleep(time.Second / 3)
 			if i == 9 {
@@ -30,23 +32,19 @@ func TestDiskQueue_Close(t *testing.T) {
 	}()
 	time.Sleep(time.Second)
 	var dataList [][]byte
-	for data := range dq.ReadChan() {
+	for data := range dqRead.ReadChan() {
 		dataList = append(dataList, data)
-		if len(dq.ReadChan()) == 0 || len(dataList) == 2 {
-			fmt.Println("dataList len:", len(dataList))
+		if len(dqWrite.ReadChan()) == 0 || len(dataList) == 2 {
 			var is []string
 			for _, data := range dataList {
 				is = append(is, string(data))
 			}
 			fmt.Println("is:", is)
-			dq.HandForward(dataList)
+			dqWrite.HandForward(dataList)
 			dataList = [][]byte{}
 			Err.IfPanic(err)
 		}
 		time.Sleep(time.Second)
 	}
-	err = dq.Close()
-	Err.IfPanic(err)
-	tm := start.Sub(time.Now())
-	log.Println(tm)
+	err = dqWrite.Close()
 }

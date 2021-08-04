@@ -1,23 +1,40 @@
 package main
 
 import (
-	"io"
-	"log"
-	"os"
+	"fmt"
+	"reflect"
+	"time"
 )
 
 func main() {
-	f, err := os.OpenFile("./temp.txt", os.O_RDWR|os.O_CREATE, 0600)
-	if err != nil {
-		panic(err)
+	ch := make(chan int, 1)
+	go func() {
+		a := <-ch
+		fmt.Println(a)
+	}()
+	select {
+	case ch <- 1:
+	default:
+		fmt.Println("def")
 	}
-	defer f.Close()
-	data := make([]byte, 1)
-	for i := 0; i < 5; i++ {
-		n, err := io.ReadFull(f, data)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("i:", i, ",n:", n, ",data:", string(data))
+	time.Sleep(time.Second)
+	fmt.Println("end")
+}
+
+func TryCatchFinally(t func(), cf ...interface{}) {
+	if len(cf) > 0 {
+		defer func() {
+			if err := recover(); err != nil {
+				rv := reflect.ValueOf(cf[0])
+				rv.Call([]reflect.Value{reflect.ValueOf(err)})
+			}
+		}()
 	}
+	if len(cf) > 1 {
+		defer func() {
+			rv := reflect.ValueOf(cf[1])
+			rv.Call([]reflect.Value{})
+		}()
+	}
+	t()
 }

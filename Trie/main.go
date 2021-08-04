@@ -8,10 +8,11 @@ import (
 
 func main() {
 	n := node{}
-	n.insert("/a/:p", []string{"a", ":p"}, 0)
-	Echo.Json(n)
-	ns := n.search([]string{"a", "b"}, 0)
-	Echo.Json(ns)
+	path := "a/b/:p"
+	n.insert(path, parsePattern(path), 0)
+	path1 := "a/c/:p"
+	n.insert(path, parsePattern(path1), 0)
+	Echo.JsonPretty(n)
 }
 
 type node struct {
@@ -19,6 +20,21 @@ type node struct {
 	Part     string
 	Children []*node
 	IsWild   bool
+}
+
+func parsePattern(pattern string) []string {
+	vs := strings.Split(pattern, "/")
+
+	parts := make([]string, 0)
+	for _, item := range vs {
+		if item != "" {
+			parts = append(parts, item)
+			if item[0] == '*' {
+				break
+			}
+		}
+	}
+	return parts
 }
 
 func (n *node) String() string {
@@ -59,15 +75,6 @@ func (n *node) search(parts []string, height int) *node {
 	}
 
 	return nil
-}
-
-func (n *node) travel(list *([]*node)) {
-	if n.Pattern != "" {
-		*list = append(*list, n)
-	}
-	for _, child := range n.Children {
-		child.travel(list)
-	}
 }
 
 func (n *node) matchChild(part string) *node {
