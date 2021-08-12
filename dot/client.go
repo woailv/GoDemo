@@ -1,4 +1,4 @@
-package tcpProxy
+package dot
 
 import (
 	"fmt"
@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-type Conn struct {
+type Client struct {
 	conn       net.Conn
 	remoteAddr string
-	tp         *server
+	server     *server
 	readCh     chan []byte
 	writeCh    chan []byte
 	writeMu    sync.Mutex
@@ -21,20 +21,20 @@ type Conn struct {
 	log        *log.Logger
 }
 
-func (c *Conn) Exist() {
+func (c *Client) Exist() {
 	if !atomic.CompareAndSwapInt32(&c.existFlat, 0, 1) {
 		return
 	}
 	c.log.Println("conn exist:", c.remoteAddr)
-	c.tp.connMap.Delete(c.remoteAddr)
+	c.server.connMap.Delete(c.remoteAddr)
 	_ = c.conn.Close()
 }
 
-func (c *Conn) Enter() {
-	c.tp.connMap.Store(c.remoteAddr, c)
+func (c *Client) Enter() {
+	c.server.connMap.Store(c.remoteAddr, c)
 }
 
-func (c *Conn) readLoop() {
+func (c *Client) readLoop() {
 	for {
 		data := make([]byte, 1024)
 		n, err := c.conn.Read(data)
@@ -47,7 +47,7 @@ func (c *Conn) readLoop() {
 	}
 }
 
-func (c *Conn) write(data []byte) {
+func (c *Client) write(data []byte) {
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
 	_, err := c.conn.Write(data)
@@ -56,7 +56,7 @@ func (c *Conn) write(data []byte) {
 	}
 }
 
-func (c *Conn) ioLoop() {
+func (c *Client) ioLoop() {
 	tk := time.NewTicker(time.Second * 1)
 	for {
 		select {

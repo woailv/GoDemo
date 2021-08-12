@@ -1,4 +1,4 @@
-package tcpProxy
+package dot
 
 import (
 	"log"

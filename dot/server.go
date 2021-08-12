@@ -1,4 +1,4 @@
-package tcpProxy
+package dot
 
 import (
 	"log"
@@ -26,14 +26,14 @@ type server struct {
 func (tp *server) Exist() {
 	_ = tp.listener.Close()
 	// 清理客户端连接 不清理会一直存在(就算关闭了listener)
-	tp.ItemProxyConnMap(func(c *Conn) {
-		c.Exist()
-	})
+	//tp.ItemProxyConnMap(func(c *Conn) {
+	//	c.Exist()
+	//})
 }
 
-func (tp *server) ItemProxyConnMap(f func(c *Conn)) {
+func (tp *server) ItemProxyConnMap(f func(c *Client)) {
 	tp.connMap.Range(func(key, value interface{}) bool {
-		f(value.(*Conn))
+		f(value.(*Client))
 		return true
 	})
 }
@@ -89,8 +89,8 @@ func (tp *server) run(listen net.Listener, handle func(conn net.Conn)) {
 }
 
 func (tp *server) handleProxyConn(conn net.Conn) {
-	c := &Conn{
-		tp:         tp,
+	c := &Client{
+		server:     tp,
 		conn:       conn,
 		remoteAddr: conn.RemoteAddr().String(),
 		readCh:     make(chan []byte),

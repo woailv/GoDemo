@@ -1,4 +1,4 @@
-package tcpProxy
+package dot
 
 import (
 	"testing"
@@ -10,8 +10,8 @@ func Test_tcpProxy_Run(t *testing.T) {
 	go func() {
 		for {
 			time.Sleep(time.Second * 5)
-			tp.ItemProxyConnMap(func(c *Conn) {
-				c.Exist()
+			tp.Exist()
+			tp.ItemProxyConnMap(func(c *Client) {
 				tp.log.Println("conn addr:", c.conn.RemoteAddr())
 			})
 		}
