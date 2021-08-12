@@ -31,14 +31,8 @@ func (tp *tcpProxy) Exist() {
 	tp.registerListen.Close()
 	// 清理客户端连接 不清理会一直存在(就算关闭了listener)
 	tp.ItemProxyConnMap(func(c *Conn) {
-		tp.ClearProxyConn(c)
+		c.Exist()
 	})
-}
-
-func (tp *tcpProxy) ClearProxyConn(c *Conn) {
-	tp.proxyConnMap.Delete(c.conn.RemoteAddr().String())
-	c.Exist()
-	tp.log.Println("remove conn:", c.conn.RemoteAddr())
 }
 
 func (tp *tcpProxy) ItemProxyConnMap(f func(c *Conn)) {
@@ -108,18 +102,21 @@ func (tp *tcpProxy) run(listen net.Listener, handle func(conn net.Conn)) {
 
 func (tp *tcpProxy) handleProxyConn(conn net.Conn) {
 	c := &Conn{
-		conn: conn, tp: tp,
-		readCh:  make(chan []byte),
-		writeCh: make(chan []byte),
-		errCh:   make(chan error, 1),
-		log:     log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
+		tp:         tp,
+		conn:       conn,
+		remoteAddr: conn.RemoteAddr().String(),
+		readCh:     make(chan []byte),
+		writeCh:    make(chan []byte),
+		errCh:      make(chan error, 1),
+		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 	}
-	tp.proxyConnMap.Store(c.conn.RemoteAddr().String(), c)
+	tp.proxyConnMap.Store(c.remoteAddr, c)
 	wg, f := waitFunc()
 	f(c.readLoop)
 	f(c.ioLoop)
 	wg.Wait()
-	tp.ClearProxyConn(c)
+	c.Exist()
+	tp.log.Println("conn offline:", c.remoteAddr)
 }
 
 func (tp *tcpProxy) runRegister() {

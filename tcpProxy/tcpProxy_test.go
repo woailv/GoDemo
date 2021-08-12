@@ -11,7 +11,7 @@ func Test_tcpProxy_Run(t *testing.T) {
 		for {
 			time.Sleep(time.Second * 5)
 			tp.ItemProxyConnMap(func(c *Conn) {
-				tp.ClearProxyConn(c)
+				c.Exist()
 				tp.log.Println("conn addr:", c.conn.RemoteAddr())
 			})
 		}

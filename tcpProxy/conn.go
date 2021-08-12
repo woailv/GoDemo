@@ -10,21 +10,23 @@ import (
 )
 
 type Conn struct {
-	conn      net.Conn
-	tp        *tcpProxy
-	readCh    chan []byte
-	writeCh   chan []byte
-	writeMu   sync.Mutex
-	errCh     chan error
-	existFlat int32
-	log       *log.Logger
+	conn       net.Conn
+	remoteAddr string
+	tp         *tcpProxy
+	readCh     chan []byte
+	writeCh    chan []byte
+	writeMu    sync.Mutex
+	errCh      chan error
+	existFlat  int32
+	log        *log.Logger
 }
 
 func (c *Conn) Exist() {
 	if !atomic.CompareAndSwapInt32(&c.existFlat, 0, 1) {
 		return
 	}
-	c.log.Println("conn exist:", c.conn.RemoteAddr().String())
+	c.log.Println("conn exist:", c.remoteAddr)
+	c.tp.proxyConnMap.Delete(c.remoteAddr)
 	c.conn.Close()
 }
 
