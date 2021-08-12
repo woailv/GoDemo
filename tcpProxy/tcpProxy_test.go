@@ -6,7 +6,7 @@ import (
 )
 
 func Test_tcpProxy_Run(t *testing.T) {
-	tp := NewTCPProxy(":8080", ":1111")
+	tp := NewTCPProxy(":8080")
 	go func() {
 		for {
 			time.Sleep(time.Second * 5)

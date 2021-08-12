@@ -12,7 +12,7 @@ import (
 type Conn struct {
 	conn       net.Conn
 	remoteAddr string
-	tp         *tcpProxy
+	tp         *server
 	readCh     chan []byte
 	writeCh    chan []byte
 	writeMu    sync.Mutex
@@ -26,7 +26,7 @@ func (c *Conn) Exist() {
 		return
 	}
 	c.log.Println("conn exist:", c.remoteAddr)
-	c.tp.proxyConnMap.Delete(c.remoteAddr)
+	c.tp.connMap.Delete(c.remoteAddr)
 	c.conn.Close()
 }
 
