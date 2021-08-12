@@ -27,7 +27,11 @@ func (c *Conn) Exist() {
 	}
 	c.log.Println("conn exist:", c.remoteAddr)
 	c.tp.connMap.Delete(c.remoteAddr)
-	c.conn.Close()
+	_ = c.conn.Close()
+}
+
+func (c *Conn) Enter() {
+	c.tp.connMap.Store(c.remoteAddr, c)
 }
 
 func (c *Conn) readLoop() {
@@ -69,5 +73,5 @@ func (c *Conn) ioLoop() {
 end:
 	tk.Stop()
 	c.Exist()
-	c.log.Println("end")
+	c.log.Println("io loop end")
 }

@@ -24,7 +24,7 @@ type server struct {
 }
 
 func (tp *server) Exist() {
-	tp.listener.Close()
+	_ = tp.listener.Close()
 	// 清理客户端连接 不清理会一直存在(就算关闭了listener)
 	tp.ItemProxyConnMap(func(c *Conn) {
 		c.Exist()
@@ -98,10 +98,10 @@ func (tp *server) handleProxyConn(conn net.Conn) {
 		errCh:      make(chan error, 1),
 		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 	}
-	tp.connMap.Store(c.remoteAddr, c)
 	wg, f := waitFunc()
 	f(c.readLoop)
 	f(c.ioLoop)
+	c.Enter()
 	wg.Wait()
 	c.Exist()
 	tp.log.Println("conn offline:", c.remoteAddr)
