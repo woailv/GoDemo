@@ -5,5 +5,6 @@
     <mapping directory="$PROJECT_DIR$/7days-golang" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/go-nsq" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/nsq" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/olric" vcs="Git" />
   </component>
 </project>

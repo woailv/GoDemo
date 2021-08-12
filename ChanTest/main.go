@@ -2,6 +2,7 @@ package main
 
 import "log"
 
+// 向已关闭的chan发送数据不会报异常会一直阻塞到那里 重复关闭chan会报异常
 func main() {
 	ch := make(chan int, 100)
 	ch <- 1
