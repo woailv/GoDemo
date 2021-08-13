@@ -28,9 +28,6 @@ func (c *Client) Exist() {
 	_ = c.conn.Close()
 }
 
-func (c *Client) Enter() {
-}
-
 func (c *Client) readLoop() {
 	for {
 		data := make([]byte, 1024)

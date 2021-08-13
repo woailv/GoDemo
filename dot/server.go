@@ -80,7 +80,6 @@ func (srv *server) handleConn(conn net.Conn) {
 	wg, f := waitFunc()
 	f(c.readLoop)
 	f(c.ioLoop)
-	c.Enter()
 	srv.ClientMap.Store(c.remoteAddr, c)
 	wg.Wait()
 	srv.ClientMap.Delete(c.remoteAddr)
