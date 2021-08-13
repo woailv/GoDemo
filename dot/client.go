@@ -18,6 +18,7 @@ type Client struct {
 	errCh      chan error
 	existFlat  int32
 	log        *log.Logger
+	acceptData func(c *Client, data []byte)
 }
 
 func (c *Client) Exist() {
@@ -33,11 +34,10 @@ func (c *Client) readLoop() {
 		data := make([]byte, 1024)
 		n, err := c.conn.Read(data)
 		if err != nil {
-			err := fmt.Errorf("read error:%s", err)
-			c.errCh <- err
+			c.errCh <- fmt.Errorf("read error:%s", err)
 			return
 		}
-		c.log.Println("read data:", string(data[:n]))
+		c.acceptData(c, data[:n])
 	}
 }
 
@@ -46,7 +46,7 @@ func (c *Client) write(data []byte) {
 	defer c.writeMu.Unlock()
 	_, err := c.conn.Write(data)
 	if err != nil {
-		c.errCh <- err
+		c.errCh <- fmt.Errorf("write error:%s", err)
 	}
 }
 

@@ -14,11 +14,16 @@ type Server interface {
 
 var _ Server = (*server)(nil)
 
+type ServerOption struct {
+	acceptData func(c *Client, data []byte)
+}
+
 type server struct {
 	addr      string
 	listener  net.Listener
 	ClientMap sync.Map
 	log       *log.Logger
+	option    *ServerOption
 }
 
 func (srv *server) Exist() {
@@ -38,11 +43,19 @@ func (srv *server) ClientMapRange(f func(c *Client)) {
 	srv.log.Println("client map range end")
 }
 
-func NewServer(proxyAddr string) *server {
-	return &server{
-		addr: proxyAddr,
-		log:  log.New(os.Stderr, "tcpProxy ", log.LstdFlags|log.Lshortfile),
+func NewServer(proxyAddr string, option ...func(option *ServerOption)) *server {
+	srv := &server{
+		addr:   proxyAddr,
+		log:    log.New(os.Stderr, "tcpProxy ", log.LstdFlags|log.Lshortfile),
+		option: &ServerOption{},
 	}
+	for _, f := range option {
+		f(srv.option)
+	}
+	if srv.option.acceptData == nil {
+		panic("srv.option.acceptData can't be nil")
+	}
+	return srv
 }
 
 func (srv *server) Run() error {
@@ -75,6 +88,7 @@ func (srv *server) handleConn(conn net.Conn) {
 		writeCh:    make(chan []byte),
 		errCh:      make(chan error, 1),
 		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
+		acceptData: srv.option.acceptData,
 	}
 	wg, f := waitFunc()
 	f(c.readLoop)
