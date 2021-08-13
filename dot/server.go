@@ -83,16 +83,15 @@ func (srv *server) Run() error {
 func (srv *server) handleConn(conn net.Conn) {
 	c := &Client{
 		conn:       conn,
-		remoteAddr: conn.RemoteAddr().String(),
 		errCh:      make(chan error, 1),
 		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 		acceptData: srv.option.acceptData,
 	}
 	wg, f := waitFunc()
-	f(c.readLoop)
-	srv.ClientMap.Store(c.remoteAddr, c)
+	f(c.ReadLoop)
+	srv.ClientMap.Store(c.conn.RemoteAddr(), c)
 	wg.Wait()
-	srv.ClientMap.Delete(c.remoteAddr)
+	srv.ClientMap.Delete(c.conn.RemoteAddr())
 	c.Exist()
-	srv.log.Println("conn offline:", c.remoteAddr)
+	srv.log.Println("conn offline:", c.conn.RemoteAddr())
 }
