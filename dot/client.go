@@ -53,8 +53,7 @@ func (c *Client) heartBeatLoop() {
 	tk := time.NewTicker(time.Second * 3)
 	for {
 		select {
-		case err := <-c.errCh:
-			c.log.Println("error:", err)
+		case <-c.errCh:
 			goto end
 		case <-tk.C:
 			if err := c.Write([]byte(".")); err != nil {
@@ -64,6 +63,5 @@ func (c *Client) heartBeatLoop() {
 	}
 end:
 	tk.Stop()
-	c.Exist()
 	c.log.Println("hear beat end")
 }
