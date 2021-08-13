@@ -21,7 +21,6 @@ func Test_tcpProxy_Run(t *testing.T) {
 				if err != nil {
 					c.Exist()
 				}
-				c.Exist()
 			})
 		}
 	}()

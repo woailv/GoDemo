@@ -1,6 +1,9 @@
 package dot
 
 import (
+	"encoding/binary"
+	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -13,6 +16,7 @@ type Client struct {
 	writeMu    sync.Mutex
 	existFlat  int32
 	log        *log.Logger
+	readData   func(reader io.Reader) ([]byte, error)
 	acceptData func(c *Client, data []byte)
 }
 
@@ -25,21 +29,48 @@ func (c *Client) Exist() {
 }
 
 func (c *Client) ReadLoop() {
+	rd := c.readData
+	if rd == nil {
+		rd = ReadData
+	}
 	for {
-		data := make([]byte, 1024)
-		n, err := c.conn.Read(data)
+		data, err := rd(c.conn)
 		if err != nil {
 			c.log.Println("read loop end")
 			return
 		}
-		c.acceptData(c, data[:n])
+		c.acceptData(c, data)
 	}
+}
+
+func ReadData(reader io.Reader) ([]byte, error) {
+	var msgSize int32
+	err := binary.Read(reader, binary.BigEndian, &msgSize)
+	if err != nil {
+		return nil, err
+	}
+	if msgSize < 0 {
+		return nil, fmt.Errorf("response msg size is negative: %v", msgSize)
+	}
+	buf := make([]byte, msgSize)
+	_, err = io.ReadFull(reader, buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
 }
 
 func (c *Client) Write(data []byte) error {
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
-	_, err := c.conn.Write(data)
+	err := binary.Write(c.conn, binary.BigEndian, int32(len(data)))
+	if err != nil {
+		return err
+	}
+	_, err = c.conn.Write(data)
+	if err != nil {
+		return err
+	}
 	return err
 }
 
