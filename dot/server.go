@@ -17,80 +17,59 @@ var _ Server = (*server)(nil)
 type server struct {
 	addr      string
 	listener  net.Listener
-	connMap   sync.Map
+	ClientMap sync.Map
 	existFlag int32
 	log       *log.Logger
-	errCh     chan error
 }
 
-func (tp *server) Exist() {
-	_ = tp.listener.Close()
+func (srv *server) Exist() {
+	_ = srv.listener.Close()
 	// 清理客户端连接 不清理会一直存在(就算关闭了listener)
-	//tp.ItemProxyConnMap(func(c *Conn) {
-	//	c.Exist()
-	//})
+	srv.ClientMapRange(func(c *Client) {
+		c.Exist()
+	})
 }
 
-func (tp *server) ItemProxyConnMap(f func(c *Client)) {
-	tp.connMap.Range(func(key, value interface{}) bool {
+func (srv *server) ClientMapRange(f func(c *Client)) {
+	srv.log.Println("client map range start")
+	srv.ClientMap.Range(func(key, value interface{}) bool {
 		f(value.(*Client))
 		return true
 	})
+	srv.log.Println("client map range end")
 }
 
-func NewTCPProxy(proxyAddr string) *server {
+func NewServer(proxyAddr string) *server {
 	return &server{
-		addr:  proxyAddr,
-		log:   log.New(os.Stderr, "tcpProxy ", log.LstdFlags|log.Lshortfile),
-		errCh: make(chan error),
+		addr: proxyAddr,
+		log:  log.New(os.Stderr, "tcpProxy ", log.LstdFlags|log.Lshortfile),
 	}
 }
 
-func (tp *server) Run() error {
-	wg, f := waitFunc()
-	var err error
-	f(func() {
-		tp.runProxy()
-	})
-	err = <-tp.errCh
+func (srv *server) Run() error {
+	listen, err := net.Listen("tcp", srv.addr)
 	if err != nil {
 		return err
 	}
-	wg.Wait()
-	tp.log.Println("end")
-	return nil // TODO 错误处理
-}
-
-func (tp *server) runProxy() {
-	listen, err := net.Listen("tcp", tp.addr)
-	if err != nil {
-		tp.errCh <- err
-		return
-	}
-	tp.listener = listen
-	tp.errCh <- nil
-	tp.run(listen, tp.handleProxyConn)
-}
-
-func (tp *server) run(listen net.Listener, handle func(conn net.Conn)) {
+	srv.listener = listen
 	wg, f := waitFunc()
 	for {
 		conn, err := listen.Accept()
 		if err != nil {
-			tp.log.Println(err)
+			srv.log.Println(err)
 			break
 		}
 		f(func() {
-			handle(conn)
+			srv.handleConn(conn)
 		})
 	}
 	wg.Wait()
-	tp.Exist()
+	srv.Exist()
+	return nil // TODO handle error
 }
 
-func (tp *server) handleProxyConn(conn net.Conn) {
+func (srv *server) handleConn(conn net.Conn) {
 	c := &Client{
-		server:     tp,
 		conn:       conn,
 		remoteAddr: conn.RemoteAddr().String(),
 		readCh:     make(chan []byte),
@@ -102,7 +81,9 @@ func (tp *server) handleProxyConn(conn net.Conn) {
 	f(c.readLoop)
 	f(c.ioLoop)
 	c.Enter()
+	srv.ClientMap.Store(c.remoteAddr, c)
 	wg.Wait()
+	srv.ClientMap.Delete(c.remoteAddr)
 	c.Exist()
-	tp.log.Println("conn offline:", c.remoteAddr)
+	srv.log.Println("conn offline:", c.remoteAddr)
 }

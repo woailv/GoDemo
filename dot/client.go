@@ -12,7 +12,6 @@ import (
 type Client struct {
 	conn       net.Conn
 	remoteAddr string
-	server     *server
 	readCh     chan []byte
 	writeCh    chan []byte
 	writeMu    sync.Mutex
@@ -26,12 +25,10 @@ func (c *Client) Exist() {
 		return
 	}
 	c.log.Println("conn exist:", c.remoteAddr)
-	c.server.connMap.Delete(c.remoteAddr)
 	_ = c.conn.Close()
 }
 
 func (c *Client) Enter() {
-	c.server.connMap.Store(c.remoteAddr, c)
 }
 
 func (c *Client) readLoop() {
@@ -57,7 +54,7 @@ func (c *Client) write(data []byte) {
 }
 
 func (c *Client) ioLoop() {
-	tk := time.NewTicker(time.Second * 1)
+	tk := time.NewTicker(time.Second * 3)
 	for {
 		select {
 		case err := <-c.errCh:
