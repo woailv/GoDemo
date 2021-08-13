@@ -5,7 +5,6 @@ import (
 	"net"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 type Client struct {
@@ -47,21 +46,4 @@ func (c *Client) Write(data []byte) error {
 		c.errCh <- err
 	}
 	return err
-}
-
-func (c *Client) heartBeatLoop() {
-	tk := time.NewTicker(time.Second * 3)
-	for {
-		select {
-		case <-c.errCh:
-			goto end
-		case <-tk.C:
-			if err := c.Write([]byte(".")); err != nil {
-				goto end
-			}
-		}
-	}
-end:
-	tk.Stop()
-	c.log.Println("hear beat end")
 }
