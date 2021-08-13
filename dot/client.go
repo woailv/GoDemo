@@ -3,6 +3,7 @@ package dot
 import (
 	"log"
 	"net"
+	"os"
 	"sync"
 	"sync/atomic"
 )
@@ -40,4 +41,17 @@ func (c *Client) Write(data []byte) error {
 	defer c.writeMu.Unlock()
 	_, err := c.conn.Write(data)
 	return err
+}
+
+func Dial(addr string, acceptData func(c *Client, data []byte)) (*Client, error) {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+	c := &Client{
+		conn:       conn,
+		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
+		acceptData: acceptData,
+	}
+	return c, nil
 }

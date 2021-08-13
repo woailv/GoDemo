@@ -8,7 +8,7 @@ import (
 
 var waitLog = log.New(os.Stderr, "wait ", log.LstdFlags|log.Lshortfile)
 
-func waitFunc() (*sync.WaitGroup, func(f func(), tag ...string)) {
+func WaitFunc() (*sync.WaitGroup, func(f func(), tag ...string)) {
 	wg := &sync.WaitGroup{}
 	return wg, func(f func(), tag ...string) {
 		wg.Add(1)

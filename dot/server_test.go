@@ -1,6 +1,7 @@
 package dot
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -12,11 +13,15 @@ func Test_tcpProxy_Run(t *testing.T) {
 		}
 	})
 	go func() {
-		for {
+		for i := 0; ; i++ {
 			time.Sleep(time.Second * 5)
 			tp.ClientMapRange(func(c *Client) {
 				tp.log.Println("conn addr:", c.conn.RemoteAddr())
-				//c.Write([]byte("haha"))
+				err := c.Write([]byte(fmt.Sprintf("hello:%d", i)))
+				if err != nil {
+					c.Exist()
+				}
+				c.Exist()
 			})
 		}
 	}()

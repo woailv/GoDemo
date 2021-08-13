@@ -1,51 +1,35 @@
 package main
 
 import (
-	log "fmt"
-	"net"
+	"GoDemo/dot"
+	"log"
 	"strconv"
-	"sync"
 	"time"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", ":8080")
+	client, err := dot.Dial(":8080", func(c *dot.Client, data []byte) {
+		log.Println("data:", string(data))
+	})
 	if err != nil {
 		panic(err)
 	}
-	i := 0
-	go func() {
-		for {
-			data := make([]byte, 1024)
-			n, err := conn.Read(data)
+	wait, f := dot.WaitFunc()
+	f(func() {
+		for i := 1; ; i++ {
+			err := client.Write([]byte(strconv.Itoa(i)))
 			if err != nil {
-				panic(err)
+				log.Println("write error:", err)
+				return
 			}
-			data = data[:n]
-			log.Println("read data:", string(data))
-			err = write(conn, 0)
-			if err != nil {
-				panic(err)
+			time.Sleep(time.Second * 3)
+			if i == 2 {
+				//client.Exist()
+				//return
 			}
 		}
-	}()
-	for {
-		i++
-		time.Sleep(time.Second * 3)
-		if err := write(conn, i); err != nil {
-			panic(err)
-		}
-		if i == 3 {
-			continue
-		}
-	}
-}
-
-var writeMu sync.Mutex
-
-func write(conn net.Conn, i int) error {
-	writeMu.Lock()
-	defer writeMu.Unlock()
-	_, err := conn.Write([]byte(strconv.Itoa(i)))
-	return err
+	})
+	f(client.ReadLoop)
+	wait.Wait()
+	client.Exist()
 }

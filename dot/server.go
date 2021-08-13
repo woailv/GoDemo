@@ -64,7 +64,7 @@ func (srv *server) Run() error {
 		return err
 	}
 	srv.listener = listen
-	wg, f := waitFunc()
+	wg, f := WaitFunc()
 	for {
 		conn, err := listen.Accept()
 		if err != nil {
@@ -83,11 +83,10 @@ func (srv *server) Run() error {
 func (srv *server) handleConn(conn net.Conn) {
 	c := &Client{
 		conn:       conn,
-		errCh:      make(chan error, 1),
 		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 		acceptData: srv.option.acceptData,
 	}
-	wg, f := waitFunc()
+	wg, f := WaitFunc()
 	f(c.ReadLoop)
 	srv.ClientMap.Store(c.conn.RemoteAddr(), c)
 	wg.Wait()
