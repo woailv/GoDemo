@@ -18,7 +18,6 @@ type server struct {
 	addr      string
 	listener  net.Listener
 	ClientMap sync.Map
-	existFlag int32
 	log       *log.Logger
 }
 
