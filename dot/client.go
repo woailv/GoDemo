@@ -1,7 +1,6 @@
 package dot
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -12,8 +11,6 @@ import (
 type Client struct {
 	conn       net.Conn
 	remoteAddr string
-	readCh     chan []byte
-	writeCh    chan []byte
 	writeMu    sync.Mutex
 	errCh      chan error
 	existFlat  int32
@@ -34,38 +31,39 @@ func (c *Client) readLoop() {
 		data := make([]byte, 1024)
 		n, err := c.conn.Read(data)
 		if err != nil {
-			c.errCh <- fmt.Errorf("read error:%s", err)
+			c.errCh <- err
+			c.log.Println("read loop end")
 			return
 		}
 		c.acceptData(c, data[:n])
 	}
 }
 
-func (c *Client) write(data []byte) {
+func (c *Client) Write(data []byte) error {
 	c.writeMu.Lock()
 	defer c.writeMu.Unlock()
 	_, err := c.conn.Write(data)
 	if err != nil {
-		c.errCh <- fmt.Errorf("write error:%s", err)
+		c.errCh <- err
 	}
+	return err
 }
 
-func (c *Client) ioLoop() {
+func (c *Client) heartBeatLoop() {
 	tk := time.NewTicker(time.Second * 3)
 	for {
 		select {
 		case err := <-c.errCh:
 			c.log.Println("error:", err)
 			goto end
-		case data := <-c.writeCh:
-			c.log.Println("write ch data:", string(data))
-			c.write(data)
 		case <-tk.C:
-			c.write([]byte("."))
+			if err := c.Write([]byte(".")); err != nil {
+				goto end
+			}
 		}
 	}
 end:
 	tk.Stop()
 	c.Exist()
-	c.log.Println("io loop end")
+	c.log.Println("hear beat end")
 }

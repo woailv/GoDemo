@@ -84,15 +84,13 @@ func (srv *server) handleConn(conn net.Conn) {
 	c := &Client{
 		conn:       conn,
 		remoteAddr: conn.RemoteAddr().String(),
-		readCh:     make(chan []byte),
-		writeCh:    make(chan []byte),
 		errCh:      make(chan error, 1),
 		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 		acceptData: srv.option.acceptData,
 	}
 	wg, f := waitFunc()
 	f(c.readLoop)
-	f(c.ioLoop)
+	f(c.heartBeatLoop)
 	srv.ClientMap.Store(c.remoteAddr, c)
 	wg.Wait()
 	srv.ClientMap.Delete(c.remoteAddr)
