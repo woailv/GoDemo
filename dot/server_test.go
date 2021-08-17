@@ -17,7 +17,7 @@ func Test_tcpProxy_Run(t *testing.T) {
 		for {
 			time.Sleep(time.Second * 3)
 			tp.ClientMapRange(func(c *Client) {
-				c.Write([]byte(fmt.Sprintf("hi:%d", i)))
+				_ = c.Write([]byte(fmt.Sprintf("hi:%d", i)))
 				i++
 			})
 		}
