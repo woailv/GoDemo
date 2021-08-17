@@ -13,14 +13,12 @@ func Test_tcpProxy_Run(t *testing.T) {
 		}
 	})
 	go func() {
-		for i := 0; ; i++ {
-			time.Sleep(time.Second * 5)
+		i := 0
+		for {
+			time.Sleep(time.Second * 3)
 			tp.ClientMapRange(func(c *Client) {
-				tp.log.Println("conn addr:", c.conn.RemoteAddr())
-				err := c.Write([]byte(fmt.Sprintf("hello:%d", i)))
-				if err != nil {
-					c.Exist()
-				}
+				c.Write([]byte(fmt.Sprintf("hi:%d", i)))
+				i++
 			})
 		}
 	}()

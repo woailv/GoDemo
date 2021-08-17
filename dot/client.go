@@ -12,12 +12,11 @@ import (
 )
 
 type Client struct {
-	conn       net.Conn
-	writeMu    sync.Mutex
-	existFlat  int32
-	log        *log.Logger
-	readData   func(reader io.Reader) ([]byte, error)
-	acceptData func(c *Client, data []byte)
+	conn      net.Conn
+	writeMu   sync.Mutex
+	existFlat int32
+	log       *log.Logger
+	readData  func(reader io.Reader) ([]byte, error)
 }
 
 func (c *Client) Exist() {
@@ -28,7 +27,7 @@ func (c *Client) Exist() {
 	_ = c.conn.Close()
 }
 
-func (c *Client) ReadLoop() {
+func (c *Client) ReadClientLoop(acceptData func(c *Client, data []byte)) {
 	rd := c.readData
 	if rd == nil {
 		rd = ReadData
@@ -39,7 +38,22 @@ func (c *Client) ReadLoop() {
 			c.log.Println("read loop end")
 			return
 		}
-		c.acceptData(c, data)
+		acceptData(c, data)
+	}
+}
+
+func (c *Client) ReadServerLoop(acceptData func(data []byte)) {
+	rd := c.readData
+	if rd == nil {
+		rd = ReadData
+	}
+	for {
+		data, err := rd(c.conn)
+		if err != nil {
+			c.log.Println("read loop end")
+			return
+		}
+		acceptData(data)
 	}
 }
 
@@ -74,15 +88,14 @@ func (c *Client) Write(data []byte) error {
 	return err
 }
 
-func Dial(addr string, acceptData func(c *Client, data []byte)) (*Client, error) {
+func Dial(addr string) (*Client, error) {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 	c := &Client{
-		conn:       conn,
-		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
-		acceptData: acceptData,
+		conn: conn,
+		log:  log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 	}
 	return c, nil
 }

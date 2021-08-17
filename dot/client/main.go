@@ -8,9 +8,7 @@ import (
 )
 
 func main() {
-	client, err := dot.Dial(":8080", func(c *dot.Client, data []byte) {
-		log.Println("data:", string(data))
-	})
+	client, err := dot.Dial(":8080")
 	if err != nil {
 		panic(err)
 	}
@@ -29,7 +27,11 @@ func main() {
 			}
 		}
 	})
-	f(client.ReadLoop)
+	f(func() {
+		client.ReadServerLoop(func(data []byte) {
+			log.Println("data:", string(data))
+		})
+	})
 	wait.Wait()
 	client.Exist()
 }

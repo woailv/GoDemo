@@ -29,9 +29,9 @@ type server struct {
 func (srv *server) Exist() {
 	_ = srv.listener.Close()
 	// 清理客户端连接 不清理会一直存在(就算关闭了listener)
-	srv.ClientMapRange(func(c *Client) {
-		c.Exist()
-	})
+	//srv.ClientMapRange(func(c *Client) {
+	//	c.Exist()
+	//})
 }
 
 func (srv *server) ClientMapRange(f func(c *Client)) {
@@ -82,12 +82,13 @@ func (srv *server) Run() error {
 
 func (srv *server) handleConn(conn net.Conn) {
 	c := &Client{
-		conn:       conn,
-		log:        log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
-		acceptData: srv.option.acceptData,
+		conn: conn,
+		log:  log.New(os.Stderr, "clientConn ", log.LstdFlags|log.Lshortfile),
 	}
 	wg, f := WaitFunc()
-	f(c.ReadLoop)
+	f(func() {
+		c.ReadClientLoop(srv.option.acceptData)
+	})
 	srv.ClientMap.Store(c.conn.RemoteAddr(), c)
 	wg.Wait()
 	srv.ClientMap.Delete(c.conn.RemoteAddr())
