@@ -2,7 +2,7 @@ package main
 
 import (
 	"GoDemo/dot"
-	"GoDemo/dot/allcache"
+	"GoDemo/dot/acache"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 			":8081",
 			":8082",
 		}
-		ac := acache.NewAllCache(httpAddr, addr, addrList)
+		ac := acache.NewACache(httpAddr, addr, addrList)
 		err := ac.Run()
 		if err != nil {
 			panic(err)
@@ -27,7 +27,7 @@ func main() {
 			":8081",
 			":8082",
 		}
-		ac := acache.NewAllCache(httpAddr, addr, addrList)
+		ac := acache.NewACache(httpAddr, addr, addrList)
 		err := ac.Run()
 		if err != nil {
 			panic(err)
