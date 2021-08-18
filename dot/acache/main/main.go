@@ -14,7 +14,7 @@ func main() {
 			":8081",
 			":8082",
 		}
-		ac := allcache.NewAllCache(httpAddr, addr, addrList)
+		ac := acache.NewAllCache(httpAddr, addr, addrList)
 		err := ac.Run()
 		if err != nil {
 			panic(err)
@@ -27,7 +27,7 @@ func main() {
 			":8081",
 			":8082",
 		}
-		ac := allcache.NewAllCache(httpAddr, addr, addrList)
+		ac := acache.NewAllCache(httpAddr, addr, addrList)
 		err := ac.Run()
 		if err != nil {
 			panic(err)

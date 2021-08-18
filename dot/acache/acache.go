@@ -1,4 +1,4 @@
-package allcache
+package acache
 
 import (
 	"GoDemo/dot"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type allCache struct {
+type aCache struct {
 	httpAddr        string
 	server          dot.Server
 	allAddr         []string
@@ -19,8 +19,8 @@ type allCache struct {
 	log             *log.Logger
 }
 
-func NewAllCache(httpAddr, tcpAddr string, allAddr []string) *allCache {
-	ac := &allCache{
+func NewACache(httpAddr, tcpAddr string, allAddr []string) *aCache {
+	ac := &aCache{
 		httpAddr: httpAddr,
 		allAddr:  allAddr,
 		log:      log.New(os.Stderr, "allCache ", log.LstdFlags|log.Lshortfile),
@@ -40,7 +40,7 @@ func NewAllCache(httpAddr, tcpAddr string, allAddr []string) *allCache {
 	return ac
 }
 
-func (ac *allCache) Run() error {
+func (ac *aCache) Run() error {
 	var err error
 	wg, f := dot.WaitFunc()
 	f(func() {
