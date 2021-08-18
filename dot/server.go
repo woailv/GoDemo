@@ -11,6 +11,7 @@ type Server interface {
 	Run() error
 	Exist()
 	ClientMapRange(f func(c *Client))
+	GetClientAddrList() []string
 }
 
 var _ Server = (*server)(nil)
@@ -32,9 +33,16 @@ type server struct {
 func (srv *server) Exist() {
 	_ = srv.listener.Close()
 	// 清理客户端连接 不清理会一直存在(就算关闭了listener)
-	//srv.ClientMapRange(func(c *Client) {
-	//	c.Exist()
-	//})
+	srv.ClientMapRange(func(c *Client) {
+		c.Exist()
+	})
+}
+
+func (srv *server) GetClientAddrList() (list []string) {
+	srv.ClientMapRange(func(c *Client) {
+		list = append(list, c.GetRemoteAddr())
+	})
+	return
 }
 
 func (srv *server) ClientMapRange(f func(c *Client)) {

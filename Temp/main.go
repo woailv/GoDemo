@@ -2,16 +2,30 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"reflect"
 	"time"
 )
 
 func main() {
-	ViewTime()
+	t := T{Name: "haha"}
+	rv := reflect.ValueOf(t)
+	var ok bool
+	rvf := rv.MethodByName("NameView1")
+	ok = rvf.IsValid()
+	//ok = rvf.IsNil()
+	//ok = rvf.IsZero()
+	log.Println(ok)
+	//rvf.Call([]reflect.Value{})
 }
 
 type T struct {
 	Name string
 	Age  int
+}
+
+func (t *T) NameView() {
+	fmt.Println(t.Name)
 }
 
 func ViewTime() {
