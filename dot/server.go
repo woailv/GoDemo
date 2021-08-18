@@ -100,6 +100,7 @@ func (srv *server) handleConn(conn net.Conn) {
 	f(func() {
 		c.ReadClientLoop(srv.option.ReadData)
 	})
+	// TODO 加锁
 	srv.ClientMap.Store(c.conn.RemoteAddr(), c)
 	srv.option.OnClientOnline(c)
 	wg.Wait()

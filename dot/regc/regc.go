@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sync"
 )
 
 type regc struct {
 	addr   string
 	server dot.Server
 	log    *log.Logger
-	mu     sync.Mutex
 }
 
 const Online = "Online"
@@ -29,13 +27,11 @@ func NewRegc(addr string) *regc {
 		option.ReadData = func(c *dot.Client, data []byte) {
 		}
 		option.OnClientOnline = func(c *dot.Client) {
-			rc.mu.Lock()
 			data, _ := json.Marshal(rc.server.GetClientAddrList())
 			err := c.Write([]byte(fmt.Sprintf("%s,%s", ExistAddrList, string(data))))
 			if err != nil {
 				panic(err)
 			}
-			rc.mu.Unlock()
 			rc.server.ClientMapRange(func(exist *dot.Client) {
 				err := exist.Write([]byte(fmt.Sprintf("%s,%s", Online, c.GetRemoteAddr())))
 				if err != nil {
@@ -44,14 +40,12 @@ func NewRegc(addr string) *regc {
 			})
 		}
 		option.OnClientOffline = func(c *dot.Client) {
-			rc.mu.Lock()
 			rc.server.ClientMapRange(func(exist *dot.Client) {
 				err := exist.Write([]byte(fmt.Sprintf("%s,%s", Offline, c.GetRemoteAddr())))
 				if err != nil {
 					rc.log.Println("write error", err)
 				}
 			})
-			rc.mu.Unlock()
 		}
 	})
 	return rc
