@@ -28,6 +28,7 @@ type server struct {
 	ClientMap sync.Map
 	log       *log.Logger
 	option    *ServerOption
+	lineMu    sync.Mutex
 }
 
 func (srv *server) Exist() {
@@ -101,11 +102,15 @@ func (srv *server) handleConn(conn net.Conn) {
 		c.ReadClientLoop(srv.option.ReadData)
 	})
 	// TODO 加锁
+	srv.lineMu.Lock()
 	srv.ClientMap.Store(c.conn.RemoteAddr(), c)
 	srv.option.OnClientOnline(c)
+	srv.lineMu.Unlock()
 	wg.Wait()
+	srv.lineMu.Lock()
 	srv.ClientMap.Delete(c.conn.RemoteAddr())
 	srv.option.OnClientOffline(c)
+	srv.lineMu.Unlock()
 	c.Exist()
 	srv.log.Println("conn offline:", c.conn.RemoteAddr())
 }
