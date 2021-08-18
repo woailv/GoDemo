@@ -4,3 +4,6 @@
 /go-nsq/
 /Temp/
 /nutsdb/
+/gkvdb/
+/bolt/
+/goleveldb/

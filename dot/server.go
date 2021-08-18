@@ -10,12 +10,15 @@ import (
 type Server interface {
 	Run() error
 	Exist()
+	ClientMapRange(f func(c *Client))
 }
 
 var _ Server = (*server)(nil)
 
 type ServerOption struct {
-	acceptData func(c *Client, data []byte)
+	ReadData        func(c *Client, data []byte)
+	OnClientOnline  func(c *Client)
+	OnClientOffline func(c *Client)
 }
 
 type server struct {
@@ -52,7 +55,7 @@ func NewServer(proxyAddr string, option ...func(option *ServerOption)) *server {
 	for _, f := range option {
 		f(srv.option)
 	}
-	if srv.option.acceptData == nil {
+	if srv.option.ReadData == nil {
 		panic("srv.option.acceptData can't be nil")
 	}
 	return srv
@@ -87,11 +90,13 @@ func (srv *server) handleConn(conn net.Conn) {
 	}
 	wg, f := WaitFunc()
 	f(func() {
-		c.ReadClientLoop(srv.option.acceptData)
+		c.ReadClientLoop(srv.option.ReadData)
 	})
 	srv.ClientMap.Store(c.conn.RemoteAddr(), c)
+	srv.option.OnClientOnline(c)
 	wg.Wait()
 	srv.ClientMap.Delete(c.conn.RemoteAddr())
+	srv.option.OnClientOffline(c)
 	c.Exist()
 	srv.log.Println("conn offline:", c.conn.RemoteAddr())
 }

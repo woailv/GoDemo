@@ -8,7 +8,7 @@ import (
 
 func Test_tcpProxy_Run(t *testing.T) {
 	tp := NewServer(":8080", func(option *ServerOption) {
-		option.acceptData = func(c *Client, data []byte) {
+		option.ReadData = func(c *Client, data []byte) {
 			c.log.Println(string(data))
 		}
 	})

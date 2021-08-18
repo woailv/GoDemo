@@ -3,7 +3,10 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/7days-golang" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/bolt" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/gkvdb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/go-nsq" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/goleveldb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/nsq" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/nutsdb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/olric" vcs="Git" />

@@ -19,6 +19,10 @@ type Client struct {
 	readData  func(reader io.Reader) ([]byte, error)
 }
 
+func (c *Client) GetRemoteAddr() string {
+	return c.conn.RemoteAddr().String()
+}
+
 func (c *Client) Exist() {
 	if !atomic.CompareAndSwapInt32(&c.existFlat, 0, 1) {
 		return
