@@ -8,10 +8,10 @@ import (
 func main() {
 	var dayList []string
 	now := time.Now()
-	for i := 1; i <= 5; i++ {
+	for i := 0; i <= 3; i++ {
 		dayList = append(dayList, now.AddDate(0, 0, -i).Format("2006-01-02"))
 	}
-	fmt.Println(dayList)
+	fmt.Println(dayList[len(dayList)-1], dayList[0])
 }
 
 type T struct {

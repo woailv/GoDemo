@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"time"
 )
@@ -9,9 +10,11 @@ import (
 func main() {
 	var dayList []string
 	now := time.Now()
-	for i := 1; i <= 5; i++ {
+	// 近几天的日期
+	for i := 0; i <= 3; i++ {
 		dayList = append(dayList, now.AddDate(0, 0, -i).Format("2006-01-02"))
 	}
+	log.Println("day list:", dayList)
 	res := StringsDoubleCompose(dayList)
 	for _, item := range res {
 		fmt.Println(item)
