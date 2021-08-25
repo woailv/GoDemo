@@ -2,21 +2,16 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"reflect"
 	"time"
 )
 
 func main() {
-	t := T{Name: "haha"}
-	rv := reflect.ValueOf(t)
-	var ok bool
-	rvf := rv.MethodByName("NameView1")
-	ok = rvf.IsValid()
-	//ok = rvf.IsNil()
-	//ok = rvf.IsZero()
-	log.Println(ok)
-	//rvf.Call([]reflect.Value{})
+	var dayList []string
+	now := time.Now()
+	for i := 1; i <= 5; i++ {
+		dayList = append(dayList, now.AddDate(0, 0, -i).Format("2006-01-02"))
+	}
+	fmt.Println(dayList)
 }
 
 type T struct {

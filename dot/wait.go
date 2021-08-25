@@ -28,3 +28,11 @@ func WaitFunc() (*sync.WaitGroup, func(f func(), tag ...string)) {
 		}()
 	}
 }
+
+func exitFunc(once *sync.Once, exitCh chan error, err error) {
+	once.Do(func() {
+		if err != nil {
+		}
+		exitCh <- err
+	})
+}
