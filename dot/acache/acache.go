@@ -3,6 +3,7 @@ package acache
 import (
 	"GoDemo/dot"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -69,11 +70,11 @@ func (ac *aCache) Run() error {
 	}
 	f(func() {
 		mux := http.NewServeMux()
-		mux.HandleFunc("/msgQueue", func(writer http.ResponseWriter, request *http.Request) {
+		mux.HandleFunc("/list", func(writer http.ResponseWriter, request *http.Request) {
 			data, _ := json.Marshal(ac.msgQueue)
 			_, _ = writer.Write(data)
 		})
-		mux.HandleFunc("/msgPush", func(writer http.ResponseWriter, request *http.Request) {
+		mux.HandleFunc("/add", func(writer http.ResponseWriter, request *http.Request) {
 			msg := request.URL.Query().Get("msg")
 			// 直接转发到所有端口
 			//ac.msgQueue = append(ac.msgQueue, msg)
@@ -81,6 +82,7 @@ func (ac *aCache) Run() error {
 				_ = c.Write([]byte(msg))
 			})
 		})
+		ac.log.Println("server http at:", fmt.Sprintf("http://127.0.0.1%s/list", ac.httpAddr))
 		err = http.ListenAndServe(ac.httpAddr, mux)
 		if err != nil {
 			panic(err)

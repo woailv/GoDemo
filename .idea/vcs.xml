@@ -4,6 +4,7 @@
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/7days-golang" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/bolt" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/consul" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/etcd" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/gkvdb" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/go-nsq" vcs="Git" />
