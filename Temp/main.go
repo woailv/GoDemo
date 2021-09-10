@@ -1,14 +1,25 @@
 package main
 
-import (
-	"fmt"
-	"sort"
-)
+import "fmt"
 
 func main() {
-	xs := []int{1, 2, 3}
-	sort.Slice(xs, func(i, j int) bool {
-		return xs[i] > xs[j]
-	})
-	fmt.Println(xs)
+	f("123")
+	f(1)
+	f(1.1)
+}
+
+type T struct {
+	Name string
+}
+
+func f(i interface{}) {
+	if i == "123" {
+		fmt.Println("string", i)
+	}
+	if i == 1 {
+		fmt.Println("int", i)
+	}
+	if i == 1.1 {
+
+	}
 }
