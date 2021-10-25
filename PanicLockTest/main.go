@@ -17,6 +17,7 @@ func main() {
 				}
 			}()
 			f(n)
+			wg.Done()
 		}()
 	}
 	wg.Wait()
@@ -28,7 +29,14 @@ var mu = sync.Mutex{}
 func f(i int) {
 	mu.Lock()
 	// 产生panic后此锁🔐不会被释放
-	defer mu.Unlock()
+	//defer mu.Unlock()
+	defer func() {
+		//mu.Unlock()
+		if err := recover(); err != nil {
+			fmt.Println("recover error", err)
+		}
+	}()
+	//defer mu.Unlock()
 	if i == 3 {
 		panic(i)
 	}
